@@ -9,7 +9,7 @@ Author URI: http://chnm.gmu.edu
 */
 
 /*
-Copyright (C) 2010 Center for History and New Media, George Mason University
+Copyright (C) 2011 Center for History and New Media, George Mason University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
