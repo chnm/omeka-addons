@@ -31,18 +31,30 @@ class Omeka_Addons {
 
     function omeka_addons() {
         add_action( 'init', array ( $this, 'init' ) );
+        add_action( 'admin_init', array( $this, 'admin_init' ) );
         add_action( 'plugins_loaded', array ( $this, 'loaded' ) );
         add_action( 'omeka_addons_init', array($this, 'register_post_types') );
+        add_action( 'omeka_addons_admin_init', array( $this, 'add_meta_boxes') );
+        add_action( 'save_post', array( $this, 'save_post') );
 
         // activation sequence
         register_activation_hook( __FILE__, array($this, 'activation') );
 
         // deactivation sequence
         register_deactivation_hook( __FILE__, array($this, 'deactivation') );
+
+        add_filter( 'the_content', array($this, 'addon_post_content') );
     }
 
     function init() {
         do_action( 'omeka_addons_init' );
+    }
+
+    /**
+     * Adds a plugin admin initialization action.
+     */
+    function admin_init() {
+        do_action( 'omeka_addons_admin_init');
     }
 
     function loaded() {
@@ -126,6 +138,139 @@ class Omeka_Addons {
             flush_rewrite_rules();
             delete_option('omeka_addons_flush_rewrite_rules');
         }
+    }
+
+    /**
+     * Adds our post meta boxes for the 'omeka_plugin' and 'omeka_theme' post type.
+     */
+    function add_meta_boxes() {
+        add_meta_box("omeka-addons-releases", __('Addon Releases', 'omeka-addons'), array($this, "meta_box"), "omeka_plugin", "side", "low");
+        add_meta_box("omeka-addons-releases", __('Addon Releases', 'omeka-addons'), array($this, "meta_box"), "omeka_theme", "side", "low");
+    }
+
+    /**
+     * Meta box for Zotero information.
+     */
+    function meta_box(){
+        global $post;
+        $releases = $this->get_releases($post);
+        if ($releases) : ?>
+        <ul id="omeka-addons-releases">
+            <?php foreach ($releases as $release) : ?>
+            <li><?php print_r($release); ?></li>
+            <?php endforeach; ?>
+        </ul>
+        <?php else: ?>
+        <p><strong>You have no releases yet.</strong></p>
+        <?php endif; ?>
+        <p><label><strong><?php _e('New Release', 'omeka-addons'); ?></strong></label></p>
+        <p><input type="text" name="omeka_addons_new_release" /></p>
+        <p>Enter the URL for a .zip file with your new release.</p>
+        <?php
+    }
+
+    /**
+     * Saves our custom post metadata. Used on the 'save_post' hook.
+     */
+    function save_post(){
+        global $post;
+        if (array_key_exists('omeka_addons_new_release', $_POST)) {
+            $zipUrl = $_POST['omeka_addons_new_release'];
+            if ($iniData = $this->get_ini_data($zipUrl)) {
+                $releaseData = array(
+                             'zip_url' => $zipUrl,
+                             'ini_data'   => $iniData
+                             );
+                add_post_meta($post->ID, "omeka_addons_release", $releaseData);
+            }
+        }
+    }
+
+    function get_ini_data($url)
+    {
+        if ($url) {
+
+            // First we need to unzip the package on our server.
+            $tempPath = '/tmp';
+            $tempName = 'omeka-addon-'. md5(uniqid(rand(), true));
+            $tempDir = $tempPath . '/'.$tempName;
+
+            $shellCommand = 'curl '.$url.' > '.$tempDir.'.zip'
+                          . ' && unzip -d '.$tempDir .' '.$tempDir.'.zip'
+                          . ' && rm '.$tempDir.'.zip';
+
+            shell_exec($shellCommand);
+
+            $tempDirContents = scandir($tempDir, 1);
+
+            if (count($tempDirContents) == 3) {
+                $addonFolder = $tempDirContents[0];
+                $addonFolderPath = $tempDir. '/'. $addonFolder;
+
+                if (file_exists($addonFolderPath .'/theme.ini')) {
+                    $iniFile = $addonFolderPath .'/theme.ini';
+                }
+
+                if (file_exists($addonFolderPath .'/plugin.ini')) {
+                    $iniFile = $addonFolderPath .'/plugin.ini';
+                }
+
+                if ($iniFile) {
+                    $ini_array = parse_ini_file($iniFile);
+                    $rmAddonDir = 'rm -Rf '.$tempDir;
+                    return $ini_array;
+                }
+            }
+        }
+    }
+
+    function get_releases($post)
+    {
+        if ($post) {
+            $custom = get_post_custom($post->ID);
+            $releaseArray = array();
+            $releases = array_key_exists('omeka_addons_release', $custom) ? $custom["omeka_addons_release"] : null;
+            if ($releases) {
+                foreach ($releases as $release) {
+                    $releaseArray[] = unserialize($release);
+                }
+            }
+            return $releaseArray;
+        }
+        return false;
+    }
+
+    function release_template($release)
+    {
+        $html = '';
+
+        if ($release) {
+            $html = '<li><a href="'
+                  . $release['zip_url']
+                  . '">'
+                  . $release['zip_url']
+                  . '</a></li>';
+        }
+
+        return $html;
+    }
+
+    function addon_post_content($content)
+    {
+        global $post;
+        $postType = get_query_var('post_type');
+        if ($postType == 'omeka_plugin' || $postType == 'omeka_theme') {
+            $releases = $this->get_releases($post);
+            if ($releases) {
+                $html = '<ul>';
+                foreach($releases as $release) {
+                    $html .= $this->release_template($release);
+                }
+                $html .= '</ul>';
+            $content = $content . $html;
+            }
+        }
+        return $content;
     }
 }
 
