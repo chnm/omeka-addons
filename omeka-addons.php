@@ -36,7 +36,8 @@ class Omeka_Addons {
         add_action( 'omeka_addons_init', array($this, 'register_post_types') );
         add_action( 'omeka_addons_admin_init', array( $this, 'add_meta_boxes') );
         add_action( 'save_post', array( $this, 'save_post') );
-
+        add_action( 'admin_head', array( $this, 'add_css') );
+        
         // activation sequence
         register_activation_hook( __FILE__, array($this, 'activation') );
 
@@ -68,7 +69,11 @@ class Omeka_Addons {
     function deactivation() {
         delete_option('omeka_addons_flush_rewrite_rules');
     }
-
+ 
+    function add_css() { ?>
+   <link rel="stylesheet" href="<?php echo WP_PLUGIN_URL . '/omeka-addons/omeka-addons.css'; ?>">
+   <?php        
+    }
     /**
      * Registers our 'omeka_plugin' and 'omeka_theme' custom post types.
      */
@@ -149,41 +154,55 @@ class Omeka_Addons {
     }
 
     /**
-     * Meta box for Zotero information.
+     * Meta box for plugin information.
      */
     function meta_box(){
         global $post;
         $releases = $this->get_releases($post);
-        if ($releases) : ?>
-        <ul id="omeka-addons-releases">
-            <?php foreach ($releases as $release) : ?>
-            <li><?php print_r($release); ?></li>
-            <?php endforeach; ?>
-        </ul>
-        <?php else: ?>
-        <p><strong>You have no releases yet.</strong></p>
-        <?php endif; ?>
-        <p><label><strong><?php _e('New Release', 'omeka-addons'); ?></strong></label></p>
-        <p><input type="text" name="omeka_addons_new_release" /></p>
-        <p>Enter the URL for a .zip file with your new release.</p>
-        <?php
+        $html = "";
+        if($releases) {
+            foreach($releases as $release) {
+                $html .= $this->_release_template_message_meta_box($release);
+                $html .= $this->_release_template_meta_box($release);
+            }
+        } else {
+            $html .= "<p><strong>You have no releases yet.</strong></p>";
+        }
+        
+        $html .= "<p><label><strong>" . _e('New Release', 'omeka-addons') . "</strong></label></p>";
+        $html .= "<p><input type='text' name='omeka_addons_new_release' /></p>";
+        $html .= "<p>Enter the URL for a .zip file with your new release.</p>";
+  		echo $html;
+  		
     }
-
+    
     /**
      * Saves our custom post metadata. Used on the 'save_post' hook.
      */
     function save_post(){
         global $post;
-        if (array_key_exists('omeka_addons_new_release', $_POST)) {
+        
+        //if (array_key_exists('omeka_addons_new_release', $_POST)) {
+        if (!empty($_POST['omeka_addons_new_release'])) {
             $zipUrl = $_POST['omeka_addons_new_release'];
-            if ($iniData = $this->get_ini_data($zipUrl)) {
+            $iniData = $this->get_ini_data($zipUrl);
+            if(is_wp_error($iniData)) {
                 $releaseData = array(
-                             'zip_url' => $zipUrl,
-                             'ini_data'   => $iniData
-                             );
-                add_post_meta($post->ID, "omeka_addons_release", $releaseData);
+                                'status' => 'error',
+                				'curl_error'=> array( 
+                				 	'code' => $iniData->get_error_code(),
+                                    'message' => $iniData->get_error_message()
+                                    ),
+                                'messages' => array()
+                                );          
+            } else {
+                $releaseData = $this->_validate_ini_data($iniData);
+                $releaseData['zip_url'] = $zipUrl;
+                $releaseData['ini_data'] = $iniData;
             }
+            add_post_meta($post->ID, "omeka_addons_release", $releaseData);
         }
+        //delete_post_meta($post->ID, "omeka_addons_release");
     }
 
     function get_ini_data($url)
@@ -198,9 +217,12 @@ class Omeka_Addons {
             $shellCommand = 'curl '.$url.' > '.$tempDir.'.zip'
                           . ' && unzip -d '.$tempDir .' '.$tempDir.'.zip'
                           . ' && rm '.$tempDir.'.zip';
-
-            shell_exec($shellCommand);
-
+                                      
+            $return_var = null;
+            exec($shellCommand, $output, $return_var);
+            if($return_var != 0) {
+                return new WP_Error($return_var, "Failed to get the file");
+            }
             $tempDirContents = scandir($tempDir, 1);
 
             if (count($tempDirContents) == 3) {
@@ -234,7 +256,9 @@ class Omeka_Addons {
                 foreach ($releases as $release) {
                     $releaseArray[] = unserialize($release);
                 }
-            }
+            }            
+            
+            //return array_reverse($releaseArray);
             return $releaseArray;
         }
         return false;
@@ -248,13 +272,93 @@ class Omeka_Addons {
             $html = '<li><a href="'
                   . $release['zip_url']
                   . '">'
-                  . $release['zip_url']
+                  . 'Download version ' . $release['ini_data']['version'] 
                   . '</a></li>';
         }
 
         return $html;
     }
 
+    function _release_template_meta_box($release) 
+    {
+        $html = "<div>";
+        if ($release) {
+            $html .= print_r($release, TRUE);
+        }
+        $html .= "</div>";
+        return $html;
+    }
+    
+    function _release_template_message_meta_box($release) 
+    {
+        global $post;
+        $html = "";
+        if($release) {
+            $status = $release['status'];
+            $html = "<div id='omeka-addons-messages' class='omeka-addons-messages omeka-addons-upload-$status'>";          
+            
+            switch ($status) {
+                case 'ok' :
+                    $html .= "<p>Zip processing successful</p>";    
+                    break;
+                case 'warning':
+                    foreach($release['messages'] as $message) {
+                        $html .= "<p>$message</p>";
+                    }
+                    break;
+                    
+                case 'error':
+                    if(isset($release['curl_error'])) {
+                        switch($release['curl_error']['code']) {
+                            case 6:
+                                $html .= "<p>Could not read zip file. Please check the URL</p>";                                
+                                break;
+                            default:
+                                $html .= "<p>Curl Error: " . $release['curl_error']['code'] . ". Please check the URL</p>";
+                                break;
+                        }
+                        //delete the field value                    
+                        delete_post_meta($post->ID, "omeka_addons_release", $release);
+                    }
+                    break;
+                
+            } 
+            foreach($release['messages'] as $message) {
+                $html .= "<p>$message</p>";
+            }                  
+            $html .= "</div>"; 
+
+        }
+        return $html;
+    }
+    
+    function _validate_ini_data($iniData) 
+    {
+        $releaseData = array();
+        $releaseData['status'] = 'ok';
+        $releaseData['messages'] = array();
+        if(!isset($iniData['name'])) {
+          $releaseData['status'] = 'error';
+          $releaseData['messages'][] = __('Addon name must be set');
+          
+        }
+        if(!isset($iniData['description'])) {
+          $releaseData['status'] = 'error';
+          $releaseData['messages'][] = __('Addon description must be set');        
+        }    
+
+        if(!isset($iniData['link'])) {
+          $releaseData['status'] = 'error';
+          $releaseData['messages'][] = __('Addon link must be set');        
+        }
+        if(!isset($iniData['omeka_tested_up_to'])) {
+          $releaseData['status'] = 'error';
+          $releaseData['messages'][] = __('Addon tested up to must be set');        
+        }        
+        return $releaseData;
+    }
+    
+    
     function addon_post_content($content)
     {
         global $post;
