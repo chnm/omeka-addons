@@ -1,0 +1,23 @@
+@CHARSET "UTF-8";
+
+.omeka-addons-messages {
+	border: 1px solid black;
+}
+
+#omeka-addons-messages > p {
+	background-color: white;	
+}
+	
+
+.omeka-addons-upload-ok {
+	background-color: green;
+}
+
+.omeka-addons-upload-warning {
+	background-color: yellow;
+}
+
+.omeka-addons-upload-error {
+	background-color: #E80C00;
+}
+
