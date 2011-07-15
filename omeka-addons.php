@@ -160,18 +160,26 @@ class Omeka_Addons {
         global $post;
         $releases = $this->get_releases($post);
         $html = "";
+        $html .= "<p><label><strong>" . _e('New Release', 'omeka-addons') . "</strong></label></p>";
+        $html .= "<p><input type='text' name='omeka_addons_new_release' /></p>";
+        $html .= "<p>Enter the URL for a .zip file with your new release.</p>";
+        
         if($releases) {
             foreach($releases as $release) {
-                $html .= $this->_release_template_message_meta_box($release);
+                if( $release['new'] ) {
+                    $html .= $this->_release_template_message_meta_box($release);
+                    $updated = $release;
+                    $updated['new'] = false;
+                    update_post_meta($post->ID, 'omeka_addons_release', $updated, $release);
+                }                
                 $html .= $this->_release_template_meta_box($release);
+                
             }
         } else {
             $html .= "<p><strong>You have no releases yet.</strong></p>";
         }
         
-        $html .= "<p><label><strong>" . _e('New Release', 'omeka-addons') . "</strong></label></p>";
-        $html .= "<p><input type='text' name='omeka_addons_new_release' /></p>";
-        $html .= "<p>Enter the URL for a .zip file with your new release.</p>";
+
   		echo $html;
   		
     }
@@ -200,9 +208,13 @@ class Omeka_Addons {
                 $releaseData['zip_url'] = $zipUrl;
                 $releaseData['ini_data'] = $iniData;
             }
+            $releaseData['new'] = true;
             add_post_meta($post->ID, "omeka_addons_release", $releaseData);
         }
-        //delete_post_meta($post->ID, "omeka_addons_release");
+        if(!empty($_POST['omeka_addons_delete'])) {
+            $this->delete_releases($_POST['omeka_addons_delete']);
+        }        
+        
     }
 
     function get_ini_data($url)
@@ -258,12 +270,23 @@ class Omeka_Addons {
                 }
             }            
             
-            //return array_reverse($releaseArray);
-            return $releaseArray;
+            return array_reverse($releaseArray);
+            //return $releaseArray;
         }
         return false;
     }
 
+    function delete_releases($versions) 
+    {
+       global $post;
+       $releases = $this->get_releases($post);
+       foreach($releases as $release) {
+           if(in_array($release['ini_data']['version'], $versions)) {
+               delete_post_meta($post->ID, 'omeka_addons_release', $release);
+           }
+       }    
+    }
+    
     function release_template($release)
     {
         $html = '';
@@ -281,9 +304,19 @@ class Omeka_Addons {
 
     function _release_template_meta_box($release) 
     {
-        $html = "<div>";
+        $html = "<div class='omeka-addons-release'>";
         if ($release) {
-            $html .= print_r($release, TRUE);
+            $version = $release['ini_data']['version'];
+            $html .= "<h3>Version " . $version;
+            $html .= "<span class='omeka-addons-delete'><input type='checkbox' name='omeka_addons_delete[]' value='$version' />";
+            $html .= "<label for='omeka_addons_delete'>Delete?</label></span></h3>";
+            $html .= "<dt>Zip URL:</dt><dd>" . $release['zip_url'] . "</dd><br />";
+            if(!empty($release['ini_data'])) {
+                foreach($release['ini_data'] as $key=>$value) {
+                    $html .= "<dt>$key:</dt><dd>$value</dd><br />";
+                }
+            }
+            $html .= "</dl>";
         }
         $html .= "</div>";
         return $html;

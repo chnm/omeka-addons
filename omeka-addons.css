@@ -17,7 +17,19 @@
 	background-color: yellow;
 }
 
+.omeka-addons-delete {
+	float: right;	
+}
+
 .omeka-addons-upload-error {
 	background-color: #E80C00;
 }
 
+.omeka-addons-release dd , .omeka-addons-release dt {
+	display: inline;	
+}
+
+.omeka-addons-release dt {
+	font-weight: bold;
+	margin-right: .5em;
+}
