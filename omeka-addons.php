@@ -34,6 +34,7 @@ class Omeka_Addons {
         add_action( 'admin_init', array( $this, 'admin_init' ) );
         add_action( 'plugins_loaded', array ( $this, 'loaded' ) );
         add_action( 'omeka_addons_init', array($this, 'register_post_types') );
+        add_action( 'omeka_addons_init', array($this, 'add_role') );
         add_action( 'omeka_addons_admin_init', array( $this, 'add_meta_boxes') );
         add_action( 'save_post', array( $this, 'save_post') );
         add_action( 'admin_head', array( $this, 'add_css') );
@@ -49,6 +50,7 @@ class Omeka_Addons {
 
     function init() {
         do_action( 'omeka_addons_init' );
+
     }
 
     /**
@@ -74,6 +76,55 @@ class Omeka_Addons {
    <link rel="stylesheet" href="<?php echo WP_PLUGIN_URL . '/omeka-addons/omeka-addons.css'; ?>">
    <?php        
     }
+    
+    function add_role() {
+        $caps = array(
+
+    		'publish_posts' => 'publish_omeka_plugins',
+			'edit_posts' => 'edit_omeka_plugins',
+			'edit_others_posts' => 'edit_others_omeka_plugins',
+			'read_private_posts' => 'read_private_omeka_plugins',
+		//	'edit_post' => 'edit_omeka_plugin',
+		//	'delete_post' => 'delete_omeka_plugin',
+		// 	'read_post' => 'read_omeka_plugin',
+    
+		        
+        );        
+        $result = add_role('omeka_addon_contributor', 'Addon Contributor', array(
+            'edit_posts' => false,
+            'delete_posts' => false, 
+            'edit_omeka_plugins' => true,
+            'edit_omeka_plugin' => true,
+            'publish_omeka_plugins' => false,
+            'edit_omeka_themes' => true,
+            'edit_omeka_theme' => true,
+            'publish_omeka_themes' => false,        
+        ));
+        $role = get_role('administrator');
+        $admin_caps = array(
+        	'read_omeka_themes',
+        	'read_omeka_plugins',
+        	'edit_omeka_themes',
+        	'edit_omeka_plugins',
+        	'delete_omeka_themes',
+        	'delete_omeka_plugins',                
+        	'edit_omeka_theme',
+        	'edit_omeka_plugin',
+            'edit_others_omeka_themes',
+            'edit_others_omeka_plugins',
+            'publish_omeka_themes',
+        	'publish_omeka_plugins',
+        );
+        foreach($admin_caps as $cap) {
+            $role->add_cap($cap);
+        }
+
+        $cap = 'edit_omeka_plugin';
+        if(current_user_can($cap)) {
+            echo "OK $cap\n\n";
+        }     
+        
+    }
     /**
      * Registers our 'omeka_plugin' and 'omeka_theme' custom post types.
      */
@@ -93,22 +144,45 @@ class Omeka_Addons {
             'parent_item_colon' => ''
         );
 
+
         $omekaPluginPostDef = array(
             'label'                 => __('plugin', 'omeka-addons'),
             'labels'                => $omekaPluginLabels,
             'public'                => true,
-            'hierarchical'          => true,
             'show_ui'               => true,
-            'capability_type'       => 'page',
+            'capability_type'       => 'omeka_plugin',
+            $caps = array(    
+        		'publish_posts' => 'publish_omeka_plugins',
+    			'edit_posts' => 'edit_omeka_plugins',
+    			'edit_others_posts' => 'edit_others_omeka_plugins',
+    			'read_private_posts' => 'read_private_omeka_plugins',
+    			'edit_post' => 'edit_omeka_plugin',
+    			'delete_post' => 'delete_omeka_plugin',
+    		 	'read_post' => 'read_omeka_plugin',
+            ),
+			'capabilities' => $caps,
+ 
             'show_in_nav_menus'     => true,
             'has_archive'           => 'add-ons/plugins',
-            'hierarchical'          => true,
-            'supports'              => array('title', 'editor'),
+            'supports'              => array('title', 'editor', 'author'),
             'rewrite'               => array("slug" => 'add-ons/plugins')
         );
 
         register_post_type( 'omeka_plugin', $omekaPluginPostDef );
+/*    
+$role = get_role('omeka_addon_contributor');
+foreach($caps as $cap) {
+    echo "$cap\n\n";
+    $role->add_cap($cap);    
+}
 
+ print_r($role);
+foreach($caps as $cap) {
+    if(current_user_can($cap)) {
+        echo "OK $cap\n\n";
+    }    
+}
+*/
         $omekaThemeLabels = array(
             'name' => _x('Omeka Themes', 'Omeka themes general name', 'omeka-addons'),
             'singular_name' => _x('Omeka Theme', 'single Omeka Theme entry', 'omeka-addons'),
@@ -129,11 +203,20 @@ class Omeka_Addons {
             'public'                => true,
             'hierarchical'          => true,
             'show_ui'               => true,
-            'capability_type'       => 'page',
+            'capability_type'       => 'omeka_theme',
+            $caps = array(    
+        		'publish_posts' => 'publish_omeka_themes',
+    			'edit_posts' => 'edit_omeka_themes',
+    			'edit_others_posts' => 'edit_others_omeka_themes',
+    			'read_private_posts' => 'read_private_omeka_themes',
+    			'edit_post' => 'edit_omeka_theme',
+    			'delete_post' => 'delete_omeka_theme',
+    		 	'read_post' => 'read_omeka_theme',
+            ),
             'show_in_nav_menus'     => true,
             'has_archive'           => 'add-ons/themes',
             'hierarchical'          => true,
-            'supports'              => array('title', 'editor'),
+            'supports'              => array('title', 'editor', 'author'),
             'rewrite'               => array("slug" => 'add-ons/themes')
         );
 
@@ -159,7 +242,9 @@ class Omeka_Addons {
     function meta_box(){
         global $post;
         $releases = $this->get_releases($post);
+        
         $html = "";
+        
         $html .= "<p><label><strong>" . _e('New Release', 'omeka-addons') . "</strong></label></p>";
         $html .= "<p><input type='text' name='omeka_addons_new_release' /></p>";
         $html .= "<p>Enter the URL for a .zip file with your new release.</p>";
@@ -190,7 +275,6 @@ class Omeka_Addons {
     function save_post(){
         global $post;
         
-        //if (array_key_exists('omeka_addons_new_release', $_POST)) {
         if (!empty($_POST['omeka_addons_new_release'])) {
             $zipUrl = $_POST['omeka_addons_new_release'];
             $iniData = $this->get_ini_data($zipUrl);
@@ -365,7 +449,7 @@ class Omeka_Addons {
         return $html;
     }
     
-    function _validate_ini_data($iniData) 
+    function _validate_ini_data($iniData, $addon_type = 'plugin') 
     {
         $releaseData = array();
         $releaseData['status'] = 'ok';
