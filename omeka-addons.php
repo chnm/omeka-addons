@@ -78,18 +78,9 @@ class Omeka_Addons {
     }
     
     function add_role() {
-        $caps = array(
-
-    		'publish_posts' => 'publish_omeka_plugins',
-			'edit_posts' => 'edit_omeka_plugins',
-			'edit_others_posts' => 'edit_others_omeka_plugins',
-			'read_private_posts' => 'read_private_omeka_plugins',
-		//	'edit_post' => 'edit_omeka_plugin',
-		//	'delete_post' => 'delete_omeka_plugin',
-		// 	'read_post' => 'read_omeka_plugin',
-    
-		        
-        );        
+        //debug. uncomment remove_role below to work with fixing role settings
+        //remove_role('omeka_addon_contributor');
+        
         $result = add_role('omeka_addon_contributor', 'Addon Contributor', array(
             'edit_posts' => false,
             'delete_posts' => false, 
@@ -98,8 +89,15 @@ class Omeka_Addons {
             'publish_omeka_plugins' => false,
             'edit_omeka_themes' => true,
             'edit_omeka_theme' => true,
-            'publish_omeka_themes' => false,        
+            'publish_omeka_themes' => false,
+            'read' => true 
         ));
+        if($result) {
+            echo "ok result \n\n\n";
+        } else {
+         echo "wtf \n\n\n";   
+        }
+        
         $role = get_role('administrator');
         $admin_caps = array(
         	'read_omeka_themes',
@@ -118,12 +116,6 @@ class Omeka_Addons {
         foreach($admin_caps as $cap) {
             $role->add_cap($cap);
         }
-
-        $cap = 'edit_omeka_plugin';
-        if(current_user_can($cap)) {
-            echo "OK $cap\n\n";
-        }     
-        
     }
     /**
      * Registers our 'omeka_plugin' and 'omeka_theme' custom post types.
@@ -169,20 +161,7 @@ class Omeka_Addons {
         );
 
         register_post_type( 'omeka_plugin', $omekaPluginPostDef );
-/*    
-$role = get_role('omeka_addon_contributor');
-foreach($caps as $cap) {
-    echo "$cap\n\n";
-    $role->add_cap($cap);    
-}
 
- print_r($role);
-foreach($caps as $cap) {
-    if(current_user_can($cap)) {
-        echo "OK $cap\n\n";
-    }    
-}
-*/
         $omekaThemeLabels = array(
             'name' => _x('Omeka Themes', 'Omeka themes general name', 'omeka-addons'),
             'singular_name' => _x('Omeka Theme', 'single Omeka Theme entry', 'omeka-addons'),
@@ -244,7 +223,6 @@ foreach($caps as $cap) {
         $releases = $this->get_releases($post);
         
         $html = "";
-        
         $html .= "<p><label><strong>" . _e('New Release', 'omeka-addons') . "</strong></label></p>";
         $html .= "<p><input type='text' name='omeka_addons_new_release' /></p>";
         $html .= "<p>Enter the URL for a .zip file with your new release.</p>";
@@ -288,7 +266,7 @@ foreach($caps as $cap) {
                                 'messages' => array()
                                 );          
             } else {
-                $releaseData = $this->_validate_ini_data($iniData);
+                $releaseData = $this->_validate_ini_data($iniData, $post->post_type);
                 $releaseData['zip_url'] = $zipUrl;
                 $releaseData['ini_data'] = $iniData;
             }
@@ -298,7 +276,6 @@ foreach($caps as $cap) {
         if(!empty($_POST['omeka_addons_delete'])) {
             $this->delete_releases($_POST['omeka_addons_delete']);
         }        
-        
     }
 
     function get_ini_data($url)
@@ -449,8 +426,10 @@ foreach($caps as $cap) {
         return $html;
     }
     
-    function _validate_ini_data($iniData, $addon_type = 'plugin') 
+    function _validate_ini_data($iniData, $addon_type) 
     {
+        
+        //common ini fields
         $releaseData = array();
         $releaseData['status'] = 'ok';
         $releaseData['messages'] = array();
@@ -469,8 +448,20 @@ foreach($caps as $cap) {
           $releaseData['messages'][] = __('Addon link must be set');        
         }
         if(!isset($iniData['omeka_tested_up_to'])) {
-          $releaseData['status'] = 'error';
-          $releaseData['messages'][] = __('Addon tested up to must be set');        
+          $releaseData['status'] = 'warning';
+          //@TODO: it'd be awesome to check whether it's tested up to the current version
+          $releaseData['messages'][] = __('Addon tested up to should be set');        
+        }
+        
+        //plugin-specific data
+        if($addon_type == 'omeka_plugin') {
+            
+        }
+        
+        //theme-specific data
+        
+        if($addon_type == 'omeka_theme') {
+            
         }        
         return $releaseData;
     }
