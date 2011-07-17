@@ -74,7 +74,7 @@ class Omeka_Addons {
  
     function add_css() { ?>
    <link rel="stylesheet" href="<?php echo WP_PLUGIN_URL . '/omeka-addons/omeka-addons.css'; ?>">
-   <?php        
+   <?php
     }
     
     function add_role() {
@@ -83,20 +83,15 @@ class Omeka_Addons {
         
         $result = add_role('omeka_addon_contributor', 'Addon Contributor', array(
             'edit_posts' => false,
-            'delete_posts' => false, 
+            'delete_posts' => false,
             'edit_omeka_plugins' => true,
             'edit_omeka_plugin' => true,
             'publish_omeka_plugins' => false,
             'edit_omeka_themes' => true,
             'edit_omeka_theme' => true,
             'publish_omeka_themes' => false,
-            'read' => true 
+            'read' => true
         ));
-        if($result) {
-            echo "ok result \n\n\n";
-        } else {
-         echo "wtf \n\n\n";   
-        }
         
         $role = get_role('administrator');
         $admin_caps = array(
@@ -105,7 +100,7 @@ class Omeka_Addons {
         	'edit_omeka_themes',
         	'edit_omeka_plugins',
         	'delete_omeka_themes',
-        	'delete_omeka_plugins',                
+        	'delete_omeka_plugins',
         	'edit_omeka_theme',
         	'edit_omeka_plugin',
             'edit_others_omeka_themes',
@@ -143,7 +138,7 @@ class Omeka_Addons {
             'public'                => true,
             'show_ui'               => true,
             'capability_type'       => 'omeka_plugin',
-            $caps = array(    
+            $caps = array(
         		'publish_posts' => 'publish_omeka_plugins',
     			'edit_posts' => 'edit_omeka_plugins',
     			'edit_others_posts' => 'edit_others_omeka_plugins',
@@ -183,7 +178,7 @@ class Omeka_Addons {
             'hierarchical'          => true,
             'show_ui'               => true,
             'capability_type'       => 'omeka_theme',
-            $caps = array(    
+            $caps = array(
         		'publish_posts' => 'publish_omeka_themes',
     			'edit_posts' => 'edit_omeka_themes',
     			'edit_others_posts' => 'edit_others_omeka_themes',
@@ -234,9 +229,15 @@ class Omeka_Addons {
                     $updated = $release;
                     $updated['new'] = false;
                     update_post_meta($post->ID, 'omeka_addons_release', $updated, $release);
-                }                
+                    if($release['status'] == 'error') {
+                        $html .= "<p>Release not saved. Please check the errors and warnings above</p>";
+                        if( delete_post_meta($post->ID, 'omeka_addons_release', $updated ) ) {
+                          $html .= "success";
+                        }
+                        
+                    }
+                }
                 $html .= $this->_release_template_meta_box($release);
-                
             }
         } else {
             $html .= "<p><strong>You have no releases yet.</strong></p>";
@@ -250,7 +251,8 @@ class Omeka_Addons {
     /**
      * Saves our custom post metadata. Used on the 'save_post' hook.
      */
-    function save_post(){
+    function save_post()
+    {
         global $post;
         
         if (!empty($_POST['omeka_addons_new_release'])) {
@@ -259,12 +261,12 @@ class Omeka_Addons {
             if(is_wp_error($iniData)) {
                 $releaseData = array(
                                 'status' => 'error',
-                				'curl_error'=> array( 
+                				'curl_error'=> array(
                 				 	'code' => $iniData->get_error_code(),
                                     'message' => $iniData->get_error_message()
                                     ),
                                 'messages' => array()
-                                );          
+                                );
             } else {
                 $releaseData = $this->_validate_ini_data($iniData, $post->post_type);
                 $releaseData['zip_url'] = $zipUrl;
@@ -275,7 +277,7 @@ class Omeka_Addons {
         }
         if(!empty($_POST['omeka_addons_delete'])) {
             $this->delete_releases($_POST['omeka_addons_delete']);
-        }        
+        }
     }
 
     function get_ini_data($url)
@@ -329,15 +331,14 @@ class Omeka_Addons {
                 foreach ($releases as $release) {
                     $releaseArray[] = unserialize($release);
                 }
-            }            
-            
-            return array_reverse($releaseArray);
-            //return $releaseArray;
+            }
+            usort($releaseArray, array($this, '_sort_by_version'));
+            return $releaseArray;
         }
         return false;
     }
 
-    function delete_releases($versions) 
+    function delete_releases($versions)
     {
        global $post;
        $releases = $this->get_releases($post);
@@ -345,7 +346,7 @@ class Omeka_Addons {
            if(in_array($release['ini_data']['version'], $versions)) {
                delete_post_meta($post->ID, 'omeka_addons_release', $release);
            }
-       }    
+       }
     }
     
     function release_template($release)
@@ -356,14 +357,14 @@ class Omeka_Addons {
             $html = '<li><a href="'
                   . $release['zip_url']
                   . '">'
-                  . 'Download version ' . $release['ini_data']['version'] 
+                  . 'Download version ' . $release['ini_data']['version']
                   . '</a></li>';
         }
 
         return $html;
     }
 
-    function _release_template_meta_box($release) 
+    function _release_template_meta_box($release)
     {
         $html = "<div class='omeka-addons-release'>";
         if ($release) {
@@ -372,7 +373,7 @@ class Omeka_Addons {
             $html .= "<span class='omeka-addons-delete'><input type='checkbox' name='omeka_addons_delete[]' value='$version' />";
             $html .= "<label for='omeka_addons_delete'>Delete?</label></span></h3>";
             $html .= "<dt>Zip URL:</dt><dd>" . $release['zip_url'] . "</dd><br />";
-            if(!empty($release['ini_data'])) {
+            if( isset($release['ini_data']) && !empty($release['ini_data'])) {
                 foreach($release['ini_data'] as $key=>$value) {
                     $html .= "<dt>$key:</dt><dd>$value</dd><br />";
                 }
@@ -383,21 +384,21 @@ class Omeka_Addons {
         return $html;
     }
     
-    function _release_template_message_meta_box($release) 
+    function _release_template_message_meta_box($release)
     {
         global $post;
         $html = "";
         if($release) {
             $status = $release['status'];
-            $html = "<div id='omeka-addons-messages' class='omeka-addons-messages omeka-addons-upload-$status'>";          
+            $html = "<div id='omeka-addons-messages' class='omeka-addons-messages omeka-addons-upload-$status'>";
             
             switch ($status) {
                 case 'ok' :
-                    $html .= "<p>Zip processing successful</p>";    
+                    $html .= "<p class='omeka-addon-ok'>Zip processing successful</p>";
                     break;
                 case 'warning':
                     foreach($release['messages'] as $message) {
-                        $html .= "<p>$message</p>";
+                        $html .= "<p class='omeka-addon-warning'>$message</p>";
                     }
                     break;
                     
@@ -405,28 +406,23 @@ class Omeka_Addons {
                     if(isset($release['curl_error'])) {
                         switch($release['curl_error']['code']) {
                             case 6:
-                                $html .= "<p>Could not read zip file. Please check the URL</p>";                                
+                                $html .= "<p class='omeka-addon-error'>Could not read zip file. Please check the URL</p>";
                                 break;
                             default:
-                                $html .= "<p>Curl Error: " . $release['curl_error']['code'] . ". Please check the URL</p>";
+                                $html .= "<p class='omeka-addon-error'>Curl Error: " . $release['curl_error']['code'] . ". Please check the URL</p>";
                                 break;
                         }
-                        //delete the field value                    
+                        //delete the field value
                         delete_post_meta($post->ID, "omeka_addons_release", $release);
                     }
                     break;
-                
-            } 
-            foreach($release['messages'] as $message) {
-                $html .= "<p>$message</p>";
-            }                  
-            $html .= "</div>"; 
-
+            }
+            $html .= "</div>";
         }
         return $html;
     }
     
-    function _validate_ini_data($iniData, $addon_type) 
+    function _validate_ini_data($iniData, $addon_type)
     {
         
         //common ini fields
@@ -435,22 +431,34 @@ class Omeka_Addons {
         $releaseData['messages'] = array();
         if(!isset($iniData['name'])) {
           $releaseData['status'] = 'error';
-          $releaseData['messages'][] = __('Addon name must be set');
+          $releaseData['messages'][] = __('name must be set');
           
         }
         if(!isset($iniData['description'])) {
           $releaseData['status'] = 'error';
-          $releaseData['messages'][] = __('Addon description must be set');        
-        }    
-
+          $releaseData['messages'][] = __('description must be set');
+        }
+        if(!isset($iniData['version'])) {
+          $releaseData['status'] = 'error';
+          $releaseData['messages'][] = __('version must be set');
+        }
+        //link vs. website in plugins vs themes
         if(!isset($iniData['link'])) {
           $releaseData['status'] = 'error';
-          $releaseData['messages'][] = __('Addon link must be set');        
+          $releaseData['messages'][] = __('link must be set');
+        }
+        if(!isset($iniData['omeka_minimum_version'])) {
+          if($releaseData['status'] != 'error') {
+              $releaseData['status'] = 'warning';
+          }
+          $releaseData['messages'][] = __('omeka_minimum_version should be set');
         }
         if(!isset($iniData['omeka_tested_up_to'])) {
-          $releaseData['status'] = 'warning';
+          if($releaseData['status'] != 'error') {
+              $releaseData['status'] = 'warning';
+          }
           //@TODO: it'd be awesome to check whether it's tested up to the current version
-          $releaseData['messages'][] = __('Addon tested up to should be set');        
+          $releaseData['messages'][] = __('omeka_tested_up_to should be set');
         }
         
         //plugin-specific data
@@ -462,10 +470,26 @@ class Omeka_Addons {
         
         if($addon_type == 'omeka_theme') {
             
-        }        
+        }
         return $releaseData;
     }
     
+    function _sort_by_version($a, $b)
+    {
+        $a_version = explode('.', $a['ini_data']['version'] );
+        $b_version = explode('.', $b['ini_data']['version'] );
+        
+        //exploded versions so someone can add arbitrarily silly numbers of point releases
+        //$point goes through the indexes and compares
+        $point = 0;
+        while(isset($a_version[$point]) || isset($b_version[$point])) {
+            if($a_version[$point] == $b_version[$point]) {
+                $point++;
+            } else {
+                return $b_version[$point] - $a_version[$point];
+            }
+        }
+    }
     
     function addon_post_content($content)
     {
