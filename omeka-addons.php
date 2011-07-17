@@ -367,7 +367,7 @@ class Omeka_Addons {
     function _release_template_meta_box($release)
     {
         $html = "<div class='omeka-addons-release'>";
-        if ($release) {
+        if ($release && isset($release['ini_data'])) {
             $version = $release['ini_data']['version'];
             $html .= "<h3>Version " . $version;
             $html .= "<span class='omeka-addons-delete'><input type='checkbox' name='omeka_addons_delete[]' value='$version' />";
