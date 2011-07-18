@@ -352,15 +352,23 @@ class Omeka_Addons {
     function release_template($release)
     {
         $html = '';
-
-        if ($release) {
-            $html = '<li><a href="'
+        
+        if($release) {
+            $html .= "<li class='omeka-addons-release-public'>";
+            $html .= "<h3>";
+            $html .= '<a href="'
                   . $release['zip_url']
                   . '">'
-                  . 'Download version ' . $release['ini_data']['version']
-                  . '</a></li>';
+                  . 'Download version' . $release['ini_data']['version']
+                  . '</a></h3>';
+            
+            foreach($release['ini_data'] as $key=>$value) {
+                $html .= "<dt>$key:</dt><dd>$value</dd>";
+            }
+            $html .= "</dl>";
+            $html .= "</li>";
         }
-
+        
         return $html;
     }
 
@@ -476,19 +484,7 @@ class Omeka_Addons {
     
     function _sort_by_version($a, $b)
     {
-        $a_version = explode('.', $a['ini_data']['version'] );
-        $b_version = explode('.', $b['ini_data']['version'] );
-        
-        //exploded versions so someone can add arbitrarily silly numbers of point releases
-        //$point goes through the indexes and compares
-        $point = 0;
-        while(isset($a_version[$point]) || isset($b_version[$point])) {
-            if($a_version[$point] == $b_version[$point]) {
-                $point++;
-            } else {
-                return $b_version[$point] - $a_version[$point];
-            }
-        }
+        return version_compare($a['ini_data']['version'], $b['ini_data']['version'] );
     }
     
     function addon_post_content($content)
