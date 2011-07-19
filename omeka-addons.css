@@ -33,3 +33,44 @@
 	font-weight: bold;
 	margin-right: .5em;
 }
+
+
+
+.addon-info {
+    float: left;
+    width: 48%;
+}
+.versions-list {
+    float: right;
+    width: 48%;
+}
+.addon {
+    border-bottom: 1px dotted #AFAE99;
+    margin-bottom: 18px;
+    overflow: hidden;
+    padding-bottom: 18px;
+}
+.button {
+    background: url("/ui/i/glass-btn.png") repeat-x scroll 0 50% #990000;
+    border: 1px solid #990000;
+    border-radius: 8px 8px 8px 8px;
+    color: #FFFFFF !important;
+    font-size: 1.2em;
+    padding: 8px 12px;
+    text-align: center;
+    text-decoration: none;
+}
+.button:hover {
+    background-color: #BB0000;
+    border-color: #BB0000;
+}
+.theme-thumbnail {
+    margin-bottom: 18px;
+    width: 300px;
+}
+.theme-thumbnail img {
+    display: block;
+    max-width: 100%;
+}
+
+

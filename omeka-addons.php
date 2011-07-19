@@ -25,6 +25,8 @@ You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+
 if ( !class_exists( 'Omeka_Addons' ) ) :
 
 class Omeka_Addons {
@@ -38,7 +40,8 @@ class Omeka_Addons {
         add_action( 'omeka_addons_admin_init', array( $this, 'add_meta_boxes') );
         add_action( 'save_post', array( $this, 'save_post') );
         add_action( 'admin_head', array( $this, 'add_css') );
-        
+        add_action( 'wp_print_styles', array($this, 'enqueue_styles') );
+
         // activation sequence
         register_activation_hook( __FILE__, array($this, 'activation') );
 
@@ -72,6 +75,11 @@ class Omeka_Addons {
         delete_option('omeka_addons_flush_rewrite_rules');
     }
  
+    function enqueue_styles() {
+        $styleUrl = '/plugins/omeka-addons/omeka-addons.css';
+        wp_enqueue_style( 'omeka-addons-style', $styleUrl);
+    }
+    
     function add_css() { ?>
    <link rel="stylesheet" href="<?php echo WP_PLUGIN_URL . '/omeka-addons/omeka-addons.css'; ?>">
    <?php
@@ -215,23 +223,25 @@ class Omeka_Addons {
      */
     function meta_box(){
         global $post;
-        $releases = $this->get_releases($post);
-        
+
         $html = "";
+/*
         $html .= "<p><label><strong>" . _e('New Release', 'omeka-addons') . "</strong></label></p>";
         $html .= "<p><input type='text' name='omeka_addons_new_release' /></p>";
         $html .= "<p>Enter the URL for a .zip file with your new release.</p>";
-        
+  */
+        $releases = $this->get_releases($post);
+        $html .= print_r($releases, true);
         if($releases) {
             foreach($releases as $release) {
                 if( $release['new'] ) {
                     $html .= $this->_release_template_message_meta_box($release);
                     $updated = $release;
                     $updated['new'] = false;
-                    update_post_meta($post->ID, 'omeka_addons_release', $updated, $release);
+                    update_post_meta($release['attachment_id'], 'omeka_addons_release', $updated, $release);
                     if($release['status'] == 'error') {
                         $html .= "<p>Release not saved. Please check the errors and warnings above</p>";
-                        if( delete_post_meta($post->ID, 'omeka_addons_release', $updated ) ) {
+                        if( delete_post_meta($release['attachment_id'], 'omeka_addons_release', $updated ) ) {
                           $html .= "success";
                         }
                         
@@ -254,84 +264,154 @@ class Omeka_Addons {
     function save_post()
     {
         global $post;
+        $releases = $this->get_releases($post);
+        $args = array(
+          'post_parent' => $post->ID,
+          'post_type' => 'attachment',
+          'post_mime_type' => 'application/zip',
+          'order' => 'DESC',
+          'orderby' => 'post_date',
+          'numberposts' => 1
+        );
+        $attachments = get_children($args);
         
-        if (!empty($_POST['omeka_addons_new_release'])) {
-            $zipUrl = $_POST['omeka_addons_new_release'];
-            $iniData = $this->get_ini_data($zipUrl);
-            if(is_wp_error($iniData)) {
-                $releaseData = array(
-                                'status' => 'error',
-                				'curl_error'=> array(
-                				 	'code' => $iniData->get_error_code(),
-                                    'message' => $iniData->get_error_message()
-                                    ),
-                                'messages' => array()
-                                );
-            } else {
-                $releaseData = $this->_validate_ini_data($iniData, $post->post_type);
-                $releaseData['zip_url'] = $zipUrl;
-                $releaseData['ini_data'] = $iniData;
-            }
-            $releaseData['new'] = true;
-            add_post_meta($post->ID, "omeka_addons_release", $releaseData);
+        if ($attachments) {
+            $last_attachment = array_pop($attachments);
+            $this->add_attachment_release($last_attachment);
         }
         if(!empty($_POST['omeka_addons_delete'])) {
             $this->delete_releases($_POST['omeka_addons_delete']);
         }
     }
 
-    function get_ini_data($url)
+    function add_attachment_release($attachment) {
+        global $post;
+        $zip_id = $attachment->ID;
+        $path = get_attached_file($zip_id);
+        $url = $attachment->guid;
+        $iniData = $this->get_ini_data($path);
+        if(is_wp_error($iniData)) {
+            $releaseData = array(
+                            'status' => 'error',
+            				'curl_error'=> array(
+            				 	'code' => $iniData->get_error_code(),
+                                'message' => $iniData->get_error_message()
+                                ),
+                            'messages' => array()
+                            );
+        } else {
+            $releaseData = $this->_validate_ini_data($iniData, $post->post_type);
+            $releaseData['ini_data'] = $iniData;
+            $releaseData['modified'] = $attachment->post_modified;
+            $releaseData['file_name'] = $attachment->post_title;
+            $releaseData['zip_url'] = $attachment->guid;
+            $releaseData['attachment_id'] = $attachment->ID;
+        }
+        $releaseData['new'] = true;
+        add_post_meta($zip_id, "omeka_addons_release", $releaseData);
+        return $releaseData;
+    }
+    
+    function get_ini_data($path)
     {
-        if ($url) {
+        global $post;
+        $tempPath = '/tmp';
+        $tempName = 'omeka-addon-'. md5(uniqid(rand(), true));
+        $tempDir = $tempPath . '/'.$tempName;
 
-            // First we need to unzip the package on our server.
-            $tempPath = '/tmp';
-            $tempName = 'omeka-addon-'. md5(uniqid(rand(), true));
-            $tempDir = $tempPath . '/'.$tempName;
+        $shellCommand = 'cp '.$path.' '.$tempDir.'.zip'
+                      . ' && unzip -d '.$tempDir .' '.$tempDir.'.zip'
+                      . ' && rm '.$tempDir.'.zip';
 
-            $shellCommand = 'curl '.$url.' > '.$tempDir.'.zip'
-                          . ' && unzip -d '.$tempDir .' '.$tempDir.'.zip'
-                          . ' && rm '.$tempDir.'.zip';
-                                      
-            $return_var = null;
-            exec($shellCommand, $output, $return_var);
-            if($return_var != 0) {
-                return new WP_Error($return_var, "Failed to get the file");
+        $return_var = null;
+        exec($shellCommand, $output, $return_var);
+/*
+        if($return_var != 1) {
+            return new WP_Error($return_var, "Failed to get the file");
+        }
+*/
+        $tempDirContents = scandir($tempDir, 1);
+        
+        if (count($tempDirContents) == 3) {
+            $addonFolder = $tempDirContents[0];
+            $addonFolderPath = $tempDir. '/'. $addonFolder;
+
+            if (file_exists($addonFolderPath .'/theme.ini')) {
+                $iniFile = $addonFolderPath .'/theme.ini';
             }
-            $tempDirContents = scandir($tempDir, 1);
 
-            if (count($tempDirContents) == 3) {
-                $addonFolder = $tempDirContents[0];
-                $addonFolderPath = $tempDir. '/'. $addonFolder;
+            if (file_exists($addonFolderPath .'/plugin.ini')) {
+                $iniFile = $addonFolderPath .'/plugin.ini';
+            }
 
-                if (file_exists($addonFolderPath .'/theme.ini')) {
-                    $iniFile = $addonFolderPath .'/theme.ini';
+            if($post->post_type = 'omeka_theme') {
+                //check if image is already there
+                $args = array(
+                    'post_parent' => $post->ID,
+                    'post_type' => 'attachment',
+                    'post_mime_type' => 'image/jpeg',
+              		'numberposts' => 1
+                );
+                if(!get_children($args)) {
+                    //make the theme.jpg attachment
+                    $filename = $tempDir . '/theme.jpg';
+                    $attachment = array(
+                         'post_mime_type' => 'image/jpeg',
+                         'post_title' => 'theme.jpg',
+                         'post_content' => '',
+                         'post_status' => 'inherit'
+                    );
+                    $attach_id = wp_insert_attachment( $attachment, $filename, $post->ID );
+                    // you must first include the image.php file
+                    // for the function wp_generate_attachment_metadata() to work
+                    require_once(ABSPATH . 'wp-admin/includes/image.php');
+                    $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
+                    wp_update_attachment_metadata( $attach_id, $attach_data );
                 }
-
-                if (file_exists($addonFolderPath .'/plugin.ini')) {
-                    $iniFile = $addonFolderPath .'/plugin.ini';
-                }
-
-                if ($iniFile) {
-                    $ini_array = parse_ini_file($iniFile);
-                    $rmAddonDir = 'rm -Rf '.$tempDir;
-                    return $ini_array;
-                }
+            }
+            if ($iniFile) {
+                $ini_array = parse_ini_file($iniFile);
+                $rmAddonDir = 'rm -Rf '.$tempDir;
+                exec($rmAddonDir, $output, $return_var);
+                return $ini_array;
             }
         }
     }
+    
 
     function get_releases($post)
     {
         if ($post) {
-            $custom = get_post_custom($post->ID);
+            //get the attachments,
+            $args = array(
+              'post_parent' => $post->ID,
+              'post_type' => 'attachment',
+              'post_mime_type' => 'application/zip',
+              'order' => 'DESC',
+              'orderby' => 'post_date',
+            );
+            $attachments = get_children($args);
+            
             $releaseArray = array();
+            foreach($attachments as $attachment) {
+                $releaseData = get_post_meta($attachment->ID, 'omeka_addons_release', true) ;
+                if($releaseData) {
+                    $releaseArray[] = $releaseData;
+                } else {
+                    $releaseArray[] = $this->add_attachment_release($attachment);
+                }
+                
+            }
+            /*
+            $custom = get_post_custom($post->ID);
+            
             $releases = array_key_exists('omeka_addons_release', $custom) ? $custom["omeka_addons_release"] : null;
             if ($releases) {
                 foreach ($releases as $release) {
                     $releaseArray[] = unserialize($release);
                 }
             }
+            // */
             usort($releaseArray, array($this, '_sort_by_version'));
             return $releaseArray;
         }
@@ -344,31 +424,23 @@ class Omeka_Addons {
        $releases = $this->get_releases($post);
        foreach($releases as $release) {
            if(in_array($release['ini_data']['version'], $versions)) {
-               delete_post_meta($post->ID, 'omeka_addons_release', $release);
+               wp_delete_post($release['attachment_id']);
            }
        }
     }
     
     function release_template($release)
     {
-        $html = '';
-        
-        if($release) {
-            $html .= "<li class='omeka-addons-release-public'>";
-            $html .= "<h3>";
-            $html .= '<a href="'
-                  . $release['zip_url']
-                  . '">'
-                  . 'Download version' . $release['ini_data']['version']
-                  . '</a></h3>';
+        $html = "";
+
+        //$html .= "<dl class='omeka-addons-ini-data'>";
+        $html .= "<tr>";
+        $html .= "<td>" . $release['ini_data']['version'] . "</td>";
+        $html .= "<td>" . $release['ini_data']['minimum_omeka_version'] . "</td>";
+        $html .= "<td><a href='" . $release['zip_url']  . "'>Download</a></td>";
+        $html .= "</tr>";
+
             
-            foreach($release['ini_data'] as $key=>$value) {
-                $html .= "<dt>$key:</dt><dd>$value</dd>";
-            }
-            $html .= "</dl>";
-            $html .= "</li>";
-        }
-        
         return $html;
     }
 
@@ -411,18 +483,7 @@ class Omeka_Addons {
                     break;
                     
                 case 'error':
-                    if(isset($release['curl_error'])) {
-                        switch($release['curl_error']['code']) {
-                            case 6:
-                                $html .= "<p class='omeka-addon-error'>Could not read zip file. Please check the URL</p>";
-                                break;
-                            default:
-                                $html .= "<p class='omeka-addon-error'>Curl Error: " . $release['curl_error']['code'] . ". Please check the URL</p>";
-                                break;
-                        }
-                        //delete the field value
-                        delete_post_meta($post->ID, "omeka_addons_release", $release);
-                    }
+     
                     break;
             }
             $html .= "</div>";
@@ -484,22 +545,46 @@ class Omeka_Addons {
     
     function _sort_by_version($a, $b)
     {
-        return version_compare($a['ini_data']['version'], $b['ini_data']['version'] );
+        if( !isset($a['ini_data']) || !isset($a['ini_data']) ) {
+            return 0;
+        }
+        
+        return version_compare($b['ini_data']['version'], $a['ini_data']['version'] );
     }
     
     function addon_post_content($content)
     {
         global $post;
+        $content = "<div class='omeka-addons-content'>" . $content . "</div>";
+        $html = "";
         $postType = get_query_var('post_type');
         if ($postType == 'omeka_plugin' || $postType == 'omeka_theme') {
             $releases = $this->get_releases($post);
             if ($releases) {
-                $html = '<ul>';
+                $html .= "<div class='addon-info'>";
+                $html .= "<p class='omeka-addons-author'>" . $releases[0]['ini_data']['author'] . "</p>";
+                $html .= "<p class='omeka-addons-description'>" . $releases[0]['ini_data']['description'] . "</p>";
+                $html .= "<p class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>Web page</a></p>";
+                $html .= "<p class='latest-release'>";
+                $html .= "<a class='button' href='" . $releases[0]['zip_url'] . "'>Latest Release: Version " . $releases[0]['ini_data']['version'] . "</a></p>";
+                //$html .= "</div>";
+                //$html .= "<div class='versions-list'>";
+                $html .= "<h3>All Versions</h3>";
+                $html .= "<table width='100%'>
+                    <thead>
+                        <tr>
+                            <th>Available Versions</th>
+                            <th>Minimum Omeka Version</th>
+                            <th>Download</th>
+                        </tr>
+                    </thead>
+                    ";
                 foreach($releases as $release) {
                     $html .= $this->release_template($release);
                 }
-                $html .= '</ul>';
+                $html .= "</tbody></table></div>";
             $content = $content . $html;
+            
             }
         }
         return $content;
