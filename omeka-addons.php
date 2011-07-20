@@ -37,6 +37,7 @@ class Omeka_Addons {
         add_action( 'plugins_loaded', array ( $this, 'loaded' ) );
         add_action( 'omeka_addons_init', array($this, 'register_post_types') );
         add_action( 'omeka_addons_init', array($this, 'add_role') );
+        add_action( 'omeka_addons_init', array($this, 'register_taxonomies') );
         add_action( 'omeka_addons_admin_init', array( $this, 'add_meta_boxes') );
         add_action( 'save_post', array( $this, 'save_post') );
         add_action( 'admin_head', array( $this, 'add_css') );
@@ -204,12 +205,37 @@ class Omeka_Addons {
 
         register_post_type( 'omeka_theme', $omekaThemePostDef );
 
+    }
+
+    function register_taxonomies()
+    {
+          
+          $labels = array(
+            'name' => _x( 'Plugin Categories', 'plugin categories' ),
+            'singular_name' => _x( 'Plugin Category', 'plugin category singular name' ),
+            'search_items' =>  __( 'Search Plugin Categories' ),
+            'all_items' => __( 'All Plugin Categories' ),
+            'edit_item' => __( 'Edit Plugin Category' ),
+            'update_item' => __( 'Update Plugin Category' ),
+            'add_new_item' => __( 'Add New Plugin Category' ),
+            'new_item_name' => __( 'New Genre Plugin Category' ),
+            'menu_name' => __( 'Plugin Category' ),
+          );
+        
+          register_taxonomy('omeka_plugin_types',array('omeka_plugin'), array(
+            'hierarchical' => false,
+            'labels' => $labels,
+            'show_ui' => true,
+            'query_var' => true,
+            'rewrite' => array( 'slug' => 'plugin_categories' ),
+          ));
+          
         if (get_option('omeka_addons_flush_rewrite_rules') == 'true') {
             flush_rewrite_rules();
             delete_option('omeka_addons_flush_rewrite_rules');
         }
     }
-
+    
     /**
      * Adds our post meta boxes for the 'omeka_plugin' and 'omeka_theme' post type.
      */
@@ -225,11 +251,6 @@ class Omeka_Addons {
         global $post;
 
         $html = "";
-/*
-        $html .= "<p><label><strong>" . _e('New Release', 'omeka-addons') . "</strong></label></p>";
-        $html .= "<p><input type='text' name='omeka_addons_new_release' /></p>";
-        $html .= "<p>Enter the URL for a .zip file with your new release.</p>";
-  */
         $releases = $this->get_releases($post);
         $html .= print_r($releases, true);
         if($releases) {
@@ -290,6 +311,7 @@ class Omeka_Addons {
         $path = get_attached_file($zip_id);
         $url = $attachment->guid;
         $iniData = $this->get_ini_data($path);
+
         if(is_wp_error($iniData)) {
             $releaseData = array(
                             'status' => 'error',
@@ -306,6 +328,25 @@ class Omeka_Addons {
             $releaseData['file_name'] = $attachment->post_title;
             $releaseData['zip_url'] = $attachment->guid;
             $releaseData['attachment_id'] = $attachment->ID;
+            
+            // no idea why I couldn't pass the data along in iniData, but it never worked right
+            if( !empty($post) && ($post->post_type == 'omeka_theme') ) {
+                $args = array(
+                    'post_parent' => $post->ID,
+                    'post_type' => 'attachment',
+                    'post_mime_type' => 'image/jpeg',
+                );
+                $images = get_children($args);
+                foreach($images as $image) {
+
+                    if($image->post_title == 'screenshot-' . $iniData['name']  . '-' . $iniData['version'] . '.jpg') {
+                        $imgData = wp_get_attachment_url($image->ID);
+                        print_r($imgData);
+                        $releaseData['screenshot'] = $imgData;
+                    }
+                }
+            }
+            
         }
         $releaseData['new'] = true;
         add_post_meta($zip_id, "omeka_addons_release", $releaseData);
@@ -325,11 +366,7 @@ class Omeka_Addons {
 
         $return_var = null;
         exec($shellCommand, $output, $return_var);
-/*
-        if($return_var != 1) {
-            return new WP_Error($return_var, "Failed to get the file");
-        }
-*/
+
         $tempDirContents = scandir($tempDir, 1);
         
         if (count($tempDirContents) == 3) {
@@ -344,33 +381,54 @@ class Omeka_Addons {
                 $iniFile = $addonFolderPath .'/plugin.ini';
             }
 
-            if($post->post_type = 'omeka_theme') {
-                //check if image is already there
-                $args = array(
-                    'post_parent' => $post->ID,
-                    'post_type' => 'attachment',
-                    'post_mime_type' => 'image/jpeg',
-              		'numberposts' => 1
-                );
-                if(!get_children($args)) {
-                    //make the theme.jpg attachment
-                    $filename = $tempDir . '/theme.jpg';
-                    $attachment = array(
-                         'post_mime_type' => 'image/jpeg',
-                         'post_title' => 'theme.jpg',
-                         'post_content' => '',
-                         'post_status' => 'inherit'
-                    );
-                    $attach_id = wp_insert_attachment( $attachment, $filename, $post->ID );
-                    // you must first include the image.php file
-                    // for the function wp_generate_attachment_metadata() to work
-                    require_once(ABSPATH . 'wp-admin/includes/image.php');
-                    $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
-                    wp_update_attachment_metadata( $attach_id, $attach_data );
-                }
-            }
             if ($iniFile) {
                 $ini_array = parse_ini_file($iniFile);
+                
+                //hacking some things until ini data is consistent
+                if(!isset($ini_array['name'])) {
+                    $ini_array['name'] = $ini_array['title'];
+                }
+                if(!isset($ini_array['link'])) {
+                    $ini_array['link'] = $ini_array['website'];
+                }
+                
+                if( !empty($post) && ($post->post_type == 'omeka_theme') ) {
+                    $is_new = true;
+                    //check if image is already there
+                    $args = array(
+                        'post_parent' => $post->ID,
+                        'post_type' => 'attachment',
+                        'post_mime_type' => 'image/jpeg',
+                    );
+                    $images = get_children($args);
+
+                    foreach($images as $image) {
+                        if($image->post_title == 'screenshot-' . $ini_array['name']  . '-' . $ini_array['version'] . '.jpg') {
+                            $is_new = false;
+                        }
+                    }
+
+                    if( $is_new ) {
+                        //make the theme.jpg attachment
+                        $filename = $addonFolderPath . '/theme.jpg';
+                        $uploadDir = wp_upload_dir();
+                        $uploadTarget = $uploadDir['basedir'] . '/screenshot-' . $ini_array['name']  . '-' . $ini_array['version'] . '.jpg' ;
+                        $cp = "cp $filename $uploadTarget";
+                        exec($cp);
+                        $attachment = array(
+                             'post_mime_type' => 'image/jpeg',
+                             'post_title' =>  'screenshot-' . $ini_array['name']  . '-' . $ini_array['version'] . '.jpg',
+                             'post_content' => '',
+                             'post_status' => 'inherit'
+                        );
+                        $attach_id = wp_insert_attachment( $attachment, $uploadTarget, $post->ID );
+                        require_once(ABSPATH . 'wp-admin/includes/image.php');
+                        $attach_data = wp_generate_attachment_metadata( $attach_id, $uploadTarget );
+                        wp_update_attachment_metadata( $attach_id, $attach_data );
+                    }
+                }
+                
+                
                 $rmAddonDir = 'rm -Rf '.$tempDir;
                 exec($rmAddonDir, $output, $return_var);
                 return $ini_array;
@@ -402,16 +460,7 @@ class Omeka_Addons {
                 }
                 
             }
-            /*
-            $custom = get_post_custom($post->ID);
-            
-            $releases = array_key_exists('omeka_addons_release', $custom) ? $custom["omeka_addons_release"] : null;
-            if ($releases) {
-                foreach ($releases as $release) {
-                    $releaseArray[] = unserialize($release);
-                }
-            }
-            // */
+
             usort($releaseArray, array($this, '_sort_by_version'));
             return $releaseArray;
         }
@@ -432,7 +481,9 @@ class Omeka_Addons {
     function release_template($release)
     {
         $html = "";
-
+        if(!isset($release['ini_data']['minimum_omeka_version'])) {
+            $release['ini_data']['minimum_omeka_version'] = 'unknown';
+        }
         //$html .= "<dl class='omeka-addons-ini-data'>";
         $html .= "<tr>";
         $html .= "<td>" . $release['ini_data']['version'] . "</td>";
@@ -474,16 +525,18 @@ class Omeka_Addons {
             
             switch ($status) {
                 case 'ok' :
-                    $html .= "<p class='omeka-addon-ok'>Zip processing successful</p>";
+                    $html .= "<p class='omeka-addons-ok'>Zip processing successful</p>";
                     break;
                 case 'warning':
                     foreach($release['messages'] as $message) {
-                        $html .= "<p class='omeka-addon-warning'>$message</p>";
+                        $html .= "<p class='omeka-addons-warning'>$message</p>";
                     }
                     break;
                     
                 case 'error':
-     
+                    foreach($release['messages'] as $message) {
+                        $html .= "<p class='omeka-addons-error'>$message</p>";
+                    }
                     break;
             }
             $html .= "</div>";
@@ -555,20 +608,19 @@ class Omeka_Addons {
     function addon_post_content($content)
     {
         global $post;
-        $content = "<div class='omeka-addons-content'>" . $content . "</div>";
-        $html = "";
+
         $postType = get_query_var('post_type');
         if ($postType == 'omeka_plugin' || $postType == 'omeka_theme') {
             $releases = $this->get_releases($post);
+            $content = "<div class='omeka-addons-content'>"  . "<p class='omeka-addons-author'>" . $releases[0]['ini_data']['author'] . "</p>" . $content . "</div>";
+            $html = "";
             if ($releases) {
-                $html .= "<div class='addon-info'>";
-                $html .= "<p class='omeka-addons-author'>" . $releases[0]['ini_data']['author'] . "</p>";
+                $html .= "<div class='omeka-addons-addon-info'>";
+                $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Latest Release: Version " . $releases[0]['ini_data']['version'] . "</a></p>";
                 $html .= "<p class='omeka-addons-description'>" . $releases[0]['ini_data']['description'] . "</p>";
                 $html .= "<p class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>Web page</a></p>";
-                $html .= "<p class='latest-release'>";
-                $html .= "<a class='button' href='" . $releases[0]['zip_url'] . "'>Latest Release: Version " . $releases[0]['ini_data']['version'] . "</a></p>";
-                //$html .= "</div>";
-                //$html .= "<div class='versions-list'>";
+                $html .= "<p class='omeka-addons-latest-release'>";
+                
                 $html .= "<h3>All Versions</h3>";
                 $html .= "<table width='100%'>
                     <thead>
