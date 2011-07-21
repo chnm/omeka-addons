@@ -9,20 +9,19 @@
 }
 	
 
-.omeka-addons-upload-ok {
-	background-color: green;
+div#omeka-addons-messages p.omeka-addons-upload-ok {
+	border: 2px solid green;
+	padding: 2px;
 }
 
-.omeka-addons-upload-warning {
-	background-color: yellow;
+div#omeka-addons-messages p.omeka-addons-upload-warning {
+	border: 2px solid yellow;
+	padding: 2px;	
 }
 
-.omeka-addons-delete {
-	float: right;	
-}
-
-.omeka-addons-upload-error {
-	background-color: #E80C00;
+div#omeka-addons-messages p.omeka-addons-upload-error {
+	border: 2px solid #E80C00;
+	padding: 2px;
 }
 
 .omeka-addons-release dd , .omeka-addons-release dt {
@@ -36,7 +35,7 @@
 
 .omeka-addons-content {
     float: left;
-    width: 380px;	
+    width: 48%;	
 }
 
 .omeka-addons-addon-info {
@@ -74,6 +73,15 @@
 .omeka-addons-theme-thumbnail img {
     display: block;
     max-width: 100%;
+}
+
+p.omeka-addons-links > span {
+	padding-left: 5px; 	
+}
+	
+
+.omeka-addons-delete {
+	float: right;	
 }
 
 ul.omeka-addons-term-list {

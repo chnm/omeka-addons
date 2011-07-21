@@ -114,6 +114,8 @@ class Omeka_Addons {
         	'edit_omeka_plugin',
             'edit_others_omeka_themes',
             'edit_others_omeka_plugins',
+            'delete_others_omeka_themes',
+            'delete_others_omeka_plugins',
             'publish_omeka_themes',
         	'publish_omeka_plugins',
         );
@@ -151,13 +153,14 @@ class Omeka_Addons {
         		'publish_posts' => 'publish_omeka_plugins',
     			'edit_posts' => 'edit_omeka_plugins',
     			'edit_others_posts' => 'edit_others_omeka_plugins',
+            	'delete_others_posts' => 'delete_others_omeka_plugins',
     			'read_private_posts' => 'read_private_omeka_plugins',
     			'edit_post' => 'edit_omeka_plugin',
     			'delete_post' => 'delete_omeka_plugin',
     		 	'read_post' => 'read_omeka_plugin',
             ),
 			'capabilities' => $caps,
- 
+ 			'map_meta_cap' => true,
             'show_in_nav_menus'     => true,
             'has_archive'           => 'add-ons/plugins',
             'supports'              => array('title', 'editor', 'author'),
@@ -191,12 +194,14 @@ class Omeka_Addons {
         		'publish_posts' => 'publish_omeka_themes',
     			'edit_posts' => 'edit_omeka_themes',
     			'edit_others_posts' => 'edit_others_omeka_themes',
+            	'delete_others_posts' => 'delete_others_omeka_themes',
     			'read_private_posts' => 'read_private_omeka_themes',
     			'edit_post' => 'edit_omeka_theme',
     			'delete_post' => 'delete_omeka_theme',
     		 	'read_post' => 'read_omeka_theme',
             ),
             'show_in_nav_menus'     => true,
+            'map_meta_cap' => true,
             'has_archive'           => 'add-ons/themes',
             'hierarchical'          => true,
             'supports'              => array('title', 'editor', 'author'),
@@ -252,7 +257,7 @@ class Omeka_Addons {
 
         $html = "";
         $releases = $this->get_releases($post);
-        $html .= print_r($releases, true);
+       // $html .= print_r($releases, true);
         if($releases) {
             foreach($releases as $release) {
                 if( $release['new'] ) {
@@ -261,14 +266,12 @@ class Omeka_Addons {
                     $updated['new'] = false;
                     update_post_meta($release['attachment_id'], 'omeka_addons_release', $updated, $release);
                     if($release['status'] == 'error') {
-                        $html .= "<p>Release not saved. Please check the errors and warnings above</p>";
-                        if( delete_post_meta($release['attachment_id'], 'omeka_addons_release', $updated ) ) {
-                          $html .= "success";
-                        }
-                        
+                        $this->delete_releases(array($release['ini_data']['version']));
                     }
                 }
-                $html .= $this->_release_template_meta_box($release);
+                if($release['status'] != 'error') {
+                    $html .= $this->_release_template_meta_box($release);
+                }
             }
         } else {
             $html .= "<p><strong>You have no releases yet.</strong></p>";
@@ -338,10 +341,8 @@ class Omeka_Addons {
                 );
                 $images = get_children($args);
                 foreach($images as $image) {
-
                     if($image->post_title == 'screenshot-' . $iniData['name']  . '-' . $iniData['version'] . '.jpg') {
                         $imgData = wp_get_attachment_url($image->ID);
-                        print_r($imgData);
                         $releaseData['screenshot'] = $imgData;
                     }
                 }
@@ -384,14 +385,10 @@ class Omeka_Addons {
             if ($iniFile) {
                 $ini_array = parse_ini_file($iniFile);
                 
-                //hacking some things until ini data is consistent
-                if(!isset($ini_array['name'])) {
-                    $ini_array['name'] = $ini_array['title'];
-                }
-                if(!isset($ini_array['link'])) {
-                    $ini_array['link'] = $ini_array['website'];
-                }
-                
+                //hacking some things until ini data is consistent between themes and plugins
+                //Omeka 1.5 will enforce the rules
+                $this->_normalize_ini($ini_array);
+
                 if( !empty($post) && ($post->post_type == 'omeka_theme') ) {
                     $is_new = true;
                     //check if image is already there
@@ -484,11 +481,14 @@ class Omeka_Addons {
         if(!isset($release['ini_data']['minimum_omeka_version'])) {
             $release['ini_data']['minimum_omeka_version'] = 'unknown';
         }
-        //$html .= "<dl class='omeka-addons-ini-data'>";
+        if(!isset($release['ini_data']['target_omeka_version'])) {
+            $release['ini_data']['target_omeka_version'] = 'unknown';
+        }
+        $downloadTitleText = "Download version " . $release['ini_data']['version'];
         $html .= "<tr>";
-        $html .= "<td>" . $release['ini_data']['version'] . "</td>";
+        $html .= "<td><a title='$downloadTitleText' href='" . $release['zip_url']  . "'>" . $release['ini_data']['version'] . "</a></td>";
         $html .= "<td>" . $release['ini_data']['minimum_omeka_version'] . "</td>";
-        $html .= "<td><a href='" . $release['zip_url']  . "'>Download</a></td>";
+        $html .= "<td>" . $release['ini_data']['target_omeka_version'] . "</td>";
         $html .= "</tr>";
 
             
@@ -521,20 +521,24 @@ class Omeka_Addons {
         $html = "";
         if($release) {
             $status = $release['status'];
-            $html = "<div id='omeka-addons-messages' class='omeka-addons-messages omeka-addons-upload-$status'>";
+            $html = "<div id='omeka-addons-messages'>";
             
+            $html .= "<p class='omeka-addons-upload-$status'>";
             switch ($status) {
                 case 'ok' :
-                    $html .= "<p class='omeka-addons-ok'>Zip processing successful</p>";
+                    $html .= "Zip processing successful</p>";
                     break;
                 case 'warning':
+                    $html .= "Some recommended information is missing:</p>";
                     foreach($release['messages'] as $message) {
                         $html .= "<p class='omeka-addons-warning'>$message</p>";
                     }
                     break;
                     
                 case 'error':
+                    $html .= "Some required information is missing. Please check the messages below and try again.</p>";
                     foreach($release['messages'] as $message) {
+                        
                         $html .= "<p class='omeka-addons-error'>$message</p>";
                     }
                     break;
@@ -547,7 +551,6 @@ class Omeka_Addons {
     function _validate_ini_data($iniData, $addon_type)
     {
         
-        //common ini fields
         $releaseData = array();
         $releaseData['status'] = 'ok';
         $releaseData['messages'] = array();
@@ -564,45 +567,59 @@ class Omeka_Addons {
           $releaseData['status'] = 'error';
           $releaseData['messages'][] = __('version must be set');
         }
-        //link vs. website in plugins vs themes
         if(!isset($iniData['link'])) {
           $releaseData['status'] = 'error';
           $releaseData['messages'][] = __('link must be set');
+        }
+        if(!isset($iniData['license'])) {
+          if($releaseData['status'] != 'error') {
+              $releaseData['status'] = 'warning';
+          }
+          $releaseData['messages'][] = __('license is not set');
         }
         if(!isset($iniData['omeka_minimum_version'])) {
           if($releaseData['status'] != 'error') {
               $releaseData['status'] = 'warning';
           }
-          $releaseData['messages'][] = __('omeka_minimum_version should be set');
+          $releaseData['messages'][] = __('omeka_minimum_version is not set');
         }
-        if(!isset($iniData['omeka_tested_up_to'])) {
+        if(!isset($iniData['omeka_target_version'])) {
           if($releaseData['status'] != 'error') {
               $releaseData['status'] = 'warning';
           }
           //@TODO: it'd be awesome to check whether it's tested up to the current version
-          $releaseData['messages'][] = __('omeka_tested_up_to should be set');
+          $releaseData['messages'][] = __('omeka_target_version is not set');
         }
         
-        //plugin-specific data
-        if($addon_type == 'omeka_plugin') {
-            
-        }
+        if(!isset($iniData['omeka']))
         
-        //theme-specific data
-        
-        if($addon_type == 'omeka_theme') {
-            
-        }
         return $releaseData;
     }
     
     function _sort_by_version($a, $b)
     {
-        if( !isset($a['ini_data']) || !isset($a['ini_data']) ) {
+        if( !isset($a['ini_data']) || !isset($b['ini_data']) ) {
             return 0;
         }
         
         return version_compare($b['ini_data']['version'], $a['ini_data']['version'] );
+    }
+    
+    function _normalize_ini(&$ini_array)
+    {
+        if(!isset($ini_array['name']) && isset($ini_array['title']) ) {
+            $ini_array['name'] = $ini_array['title'];
+        }
+        if(!isset($ini_array['link']) && isset($ini_array['website'])) {
+            $ini_array['link'] = $ini_array['website'];
+        }
+        if(!isset($ini_array['omeka_target_version']) && isset($ini_array['tested_up_to']) ) {
+            $ini_array['omeka_target_version'] = $ini_array['tested_up_to'];
+        }
+        
+        if(!isset($ini_array['omeka_minimum_version'])) {
+            $ini_array['omeka_minimum_version'] = "unknown";
+        }
     }
     
     function addon_post_content($content)
@@ -615,19 +632,31 @@ class Omeka_Addons {
             $content = "<div class='omeka-addons-content'>"  . "<p class='omeka-addons-author'>" . $releases[0]['ini_data']['author'] . "</p>" . $content . "</div>";
             $html = "";
             if ($releases) {
+                //cheating - support link is required for new addons. this let's us skip it for omeka's
+                if(!isset($releases[0]['ini_data']['support_link'])) {
+                    $releases[0]['ini_data']['support_link'] = 'http://omeka.org/forums/forum/plugins';
+                }
                 $html .= "<div class='omeka-addons-addon-info'>";
-                $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Latest Release: Version " . $releases[0]['ini_data']['version'] . "</a></p>";
                 $html .= "<p class='omeka-addons-description'>" . $releases[0]['ini_data']['description'] . "</p>";
-                $html .= "<p class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>Web page</a></p>";
+                if(isset($releases[0]['screenshot'])) {
+                    $screenshot = $releases[0]['screenshot'];
+                    $html .= "<img class='omeka-addons-screenshot' src='$screenshot' />";
+                }
+                //links
+                $html .= "<p class='omeka-addons-links'>";
+                $html .= "<span class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>Web page</a></span>";
+                $html .= "<span class='omeka-addons-support-link'><a href='" . $releases[0]['ini_data']['support_link'] . "'>Get Support</a></span>";
+                $html .= "</p>";
                 $html .= "<p class='omeka-addons-latest-release'>";
-                
+                $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Latest Release: Version " . $releases[0]['ini_data']['version'] . "</a>";
+                $html .= "</p>";
                 $html .= "<h3>All Versions</h3>";
                 $html .= "<table width='100%'>
                     <thead>
                         <tr>
                             <th>Available Versions</th>
                             <th>Minimum Omeka Version</th>
-                            <th>Download</th>
+                            <th>Target Omeka Version</th>
                         </tr>
                     </thead>
                     ";

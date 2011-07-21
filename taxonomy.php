@@ -1,9 +1,6 @@
 <?php get_header(); ?>
 
-		<div id="container">
-			<div id="content" >
-				<div class="padding">
-					<div id="primary">
+	<div id="primary">
         <?php $term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) ); ?>
 		<h1>Plugins for <?php echo $term->name; ?></h1>
 
@@ -25,18 +22,12 @@
         		    echo $html;
         		?>
         		</div>
-		        <?php
-				    the_content();
-				    
-				?>
+		        <?php the_excerpt(); ?>
 
 			</div>
 
 		<?php endwhile; endif; ?>
-				</div><!-- #primary -->
-				</div><!-- .padding -->
-			</div><!-- #content -->
-		</div><!-- #container -->
+	</div>
 
 <?php get_sidebar(); ?>
 <?php get_footer(); ?>
