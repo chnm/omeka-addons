@@ -644,9 +644,13 @@ class Omeka_Addons {
             $releases = $this->get_releases($post);
             $html = "";
             if ($releases) {
-                $content = "<div class='omeka-addons-content'>"  . "<p class='omeka-addons-author'>" . $releases[0]['ini_data']['author'] . "</p>" . $content . "</div>";
+                $pre_content = "<div class='omeka-addons-content'>"  . "<p class='omeka-addons-author'>";
+                $pre_content .= $releases[0]['ini_data']['author'] . "</p>";
+                $pre_content .= "<p class='omeka-addons-description'>" . $releases[0]['ini_data']['description'] . "</p>";
+                $content = $pre_content . $content . "</div>";
+
                 $html .= "<div class='omeka-addons-addon-info'>";
-                $html .= "<p class='omeka-addons-description'>" . $releases[0]['ini_data']['description'] . "</p>";
+                
                 if(isset($releases[0]['screenshot'])) {
                     $screenshot = $releases[0]['screenshot'];
                     $html .= "<img class='omeka-addons-screenshot' src='$screenshot' />";
