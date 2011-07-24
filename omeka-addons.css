@@ -100,3 +100,25 @@ ul.omeka-addons-term-list li {
 	font-weight: bold;	
 }
 	
+	
+#omeka-addons-theme-featured {
+	clear: none;	
+}
+
+.omeka-addons-screenshot {
+	width: 250px;	
+}
+
+.omeka-addon {
+	clear: both;	
+	
+}
+
+.featured-addons .omeka-addon {
+	clear: none;	
+}
+
+div#featured-plugins {
+	height: 450px;	
+}
+	

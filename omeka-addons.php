@@ -41,7 +41,6 @@ class Omeka_Addons {
         add_action( 'omeka_addons_admin_init', array( $this, 'add_meta_boxes') );
         add_action( 'save_post', array( $this, 'save_post') );
         add_action( 'admin_head', array( $this, 'add_css') );
-        add_action( 'wp_print_styles', array($this, 'enqueue_styles') );
 
         // activation sequence
         register_activation_hook( __FILE__, array($this, 'activation') );
@@ -54,7 +53,6 @@ class Omeka_Addons {
 
     function init() {
         do_action( 'omeka_addons_init' );
-
     }
 
     /**
@@ -99,17 +97,18 @@ class Omeka_Addons {
             'edit_omeka_themes' => true,
             'edit_omeka_theme' => true,
             'publish_omeka_themes' => false,
+            'upload_files' => true,
             'read' => true
         ));
         
-        $role = get_role('administrator');
+        $admin = get_role('administrator');
         $admin_caps = array(
         	'read_omeka_themes',
         	'read_omeka_plugins',
         	'edit_omeka_themes',
         	'edit_omeka_plugins',
-        	'delete_omeka_themes',
-        	'delete_omeka_plugins',
+        	'delete_omeka_theme',
+        	'delete_omeka_plugin',
         	'edit_omeka_theme',
         	'edit_omeka_plugin',
             'edit_others_omeka_themes',
@@ -120,7 +119,7 @@ class Omeka_Addons {
         	'publish_omeka_plugins',
         );
         foreach($admin_caps as $cap) {
-            $role->add_cap($cap);
+            $admin->add_cap($cap);
         }
     }
     /**
@@ -153,6 +152,7 @@ class Omeka_Addons {
         		'publish_posts' => 'publish_omeka_plugins',
     			'edit_posts' => 'edit_omeka_plugins',
     			'edit_others_posts' => 'edit_others_omeka_plugins',
+                'delete_posts' => 'delete_omeka_plugins',
             	'delete_others_posts' => 'delete_others_omeka_plugins',
     			'read_private_posts' => 'read_private_omeka_plugins',
     			'edit_post' => 'edit_omeka_plugin',
@@ -160,11 +160,11 @@ class Omeka_Addons {
     		 	'read_post' => 'read_omeka_plugin',
             ),
 			'capabilities' => $caps,
- 			'map_meta_cap' => true,
+ 			//'map_meta_cap' => true,
             'show_in_nav_menus'     => true,
             'has_archive'           => 'add-ons/plugins',
             'supports'              => array('title', 'editor', 'author'),
-            'rewrite'               => array("slug" => 'add-ons/plugins')
+            'rewrite'               => array("slug" => 'add-ons/plugins', 'with_front'=>false)
         );
 
         register_post_type( 'omeka_plugin', $omekaPluginPostDef );
@@ -201,11 +201,11 @@ class Omeka_Addons {
     		 	'read_post' => 'read_omeka_theme',
             ),
             'show_in_nav_menus'     => true,
-            'map_meta_cap' => true,
+            //'map_meta_cap' => true,
             'has_archive'           => 'add-ons/themes',
             'hierarchical'          => true,
             'supports'              => array('title', 'editor', 'author'),
-            'rewrite'               => array("slug" => 'add-ons/themes')
+            'rewrite'               => array("slug" => 'add-ons/themes', 'with_front'=>false)
         );
 
         register_post_type( 'omeka_theme', $omekaThemePostDef );
@@ -257,9 +257,9 @@ class Omeka_Addons {
 
         $html = "";
         $releases = $this->get_releases($post);
-       // $html .= print_r($releases, true);
         if($releases) {
             foreach($releases as $release) {
+             
                 if( $release['new'] ) {
                     $html .= $this->_release_template_message_meta_box($release);
                     $updated = $release;
@@ -276,10 +276,7 @@ class Omeka_Addons {
         } else {
             $html .= "<p><strong>You have no releases yet.</strong></p>";
         }
-        
-
   		echo $html;
-  		
     }
     
     /**
@@ -340,8 +337,9 @@ class Omeka_Addons {
                     'post_mime_type' => 'image/jpeg',
                 );
                 $images = get_children($args);
+                $sanitized_name = sanitize_file_name($iniData['name']);
                 foreach($images as $image) {
-                    if($image->post_title == 'screenshot-' . $iniData['name']  . '-' . $iniData['version'] . '.jpg') {
+                    if($image->post_title == 'screenshot-' . $sanitized_name  . '-' . $iniData['version'] . '.jpg') {
                         $imgData = wp_get_attachment_url($image->ID);
                         $releaseData['screenshot'] = $imgData;
                     }
@@ -398,9 +396,9 @@ class Omeka_Addons {
                         'post_mime_type' => 'image/jpeg',
                     );
                     $images = get_children($args);
-
+                    $sanitized_name = sanitize_file_name($ini_array['name']);
                     foreach($images as $image) {
-                        if($image->post_title == 'screenshot-' . $ini_array['name']  . '-' . $ini_array['version'] . '.jpg') {
+                        if($image->post_title == 'screenshot-' . $sanitized_name  . '-' . $ini_array['version'] . '.jpg') {
                             $is_new = false;
                         }
                     }
@@ -409,12 +407,12 @@ class Omeka_Addons {
                         //make the theme.jpg attachment
                         $filename = $addonFolderPath . '/theme.jpg';
                         $uploadDir = wp_upload_dir();
-                        $uploadTarget = $uploadDir['basedir'] . '/screenshot-' . $ini_array['name']  . '-' . $ini_array['version'] . '.jpg' ;
+                        $uploadTarget = $uploadDir['basedir'] . '/screenshot-' . $sanitized_name . '-' . $ini_array['version'] . '.jpg' ;
                         $cp = "cp $filename $uploadTarget";
                         exec($cp);
                         $attachment = array(
                              'post_mime_type' => 'image/jpeg',
-                             'post_title' =>  'screenshot-' . $ini_array['name']  . '-' . $ini_array['version'] . '.jpg',
+                             'post_title' =>  'screenshot-' . $sanitized_name  . '-' . $ini_array['version'] . '.jpg',
                              'post_content' => '',
                              'post_status' => 'inherit'
                         );
@@ -478,17 +476,12 @@ class Omeka_Addons {
     function release_template($release)
     {
         $html = "";
-        if(!isset($release['ini_data']['minimum_omeka_version'])) {
-            $release['ini_data']['minimum_omeka_version'] = 'unknown';
-        }
-        if(!isset($release['ini_data']['target_omeka_version'])) {
-            $release['ini_data']['target_omeka_version'] = 'unknown';
-        }
+
         $downloadTitleText = "Download version " . $release['ini_data']['version'];
         $html .= "<tr>";
         $html .= "<td><a title='$downloadTitleText' href='" . $release['zip_url']  . "'>" . $release['ini_data']['version'] . "</a></td>";
-        $html .= "<td>" . $release['ini_data']['minimum_omeka_version'] . "</td>";
-        $html .= "<td>" . $release['ini_data']['target_omeka_version'] . "</td>";
+        $html .= "<td>" . $release['ini_data']['omeka_minimum_version'] . "</td>";
+        $html .= "<td>" . $release['ini_data']['omeka_target_version'] . "</td>";
         $html .= "</tr>";
 
             
@@ -587,11 +580,19 @@ class Omeka_Addons {
           if($releaseData['status'] != 'error') {
               $releaseData['status'] = 'warning';
           }
-          //@TODO: it'd be awesome to check whether it's tested up to the current version
           $releaseData['messages'][] = __('omeka_target_version is not set');
+        } else {
+            $omeka_version = $this->_fetch_latest_omeka_version();
+            if (version_compare($omeka_version['major'] , $iniData['omeka_target_version'], '>') === 1 ) {
+                if($releaseData['status'] != 'error') {
+                    $releaseData['status'] = 'warning';
+                }
+                $releaseData['messages'][] = __("There is a more recent omeka version than the target version");
+            }
         }
+
         
-        if(!isset($iniData['omeka']))
+        
         
         return $releaseData;
     }
@@ -613,13 +614,25 @@ class Omeka_Addons {
         if(!isset($ini_array['link']) && isset($ini_array['website'])) {
             $ini_array['link'] = $ini_array['website'];
         }
-        if(!isset($ini_array['omeka_target_version']) && isset($ini_array['tested_up_to']) ) {
-            $ini_array['omeka_target_version'] = $ini_array['tested_up_to'];
+        if(!isset($ini_array['omeka_target_version']) && isset($ini_array['omeka_tested_up_to']) ) {
+            $ini_array['omeka_target_version'] = $ini_array['omeka_tested_up_to'];
         }
-        
         if(!isset($ini_array['omeka_minimum_version'])) {
-            $ini_array['omeka_minimum_version'] = "unknown";
+            $ini_array['omeka_minimum_version'] = 'unknown';
         }
+        if(!isset($ini_array['omeka_target_version'])) {
+            $ini_array['omeka_target_version'] = 'unknown';
+        }
+
+    }
+    
+    function _fetch_latest_omeka_version()
+    {
+        $version = file_get_contents('http://api.omeka.org/latest-version');
+        return array(
+        	'major' => substr(0, 2),
+            'full' => $version
+            );
     }
     
     function addon_post_content($content)
@@ -629,13 +642,9 @@ class Omeka_Addons {
         $postType = get_query_var('post_type');
         if ($postType == 'omeka_plugin' || $postType == 'omeka_theme') {
             $releases = $this->get_releases($post);
-            $content = "<div class='omeka-addons-content'>"  . "<p class='omeka-addons-author'>" . $releases[0]['ini_data']['author'] . "</p>" . $content . "</div>";
             $html = "";
             if ($releases) {
-                //cheating - support link is required for new addons. this let's us skip it for omeka's
-                if(!isset($releases[0]['ini_data']['support_link'])) {
-                    $releases[0]['ini_data']['support_link'] = 'http://omeka.org/forums/forum/plugins';
-                }
+                $content = "<div class='omeka-addons-content'>"  . "<p class='omeka-addons-author'>" . $releases[0]['ini_data']['author'] . "</p>" . $content . "</div>";
                 $html .= "<div class='omeka-addons-addon-info'>";
                 $html .= "<p class='omeka-addons-description'>" . $releases[0]['ini_data']['description'] . "</p>";
                 if(isset($releases[0]['screenshot'])) {
@@ -645,8 +654,13 @@ class Omeka_Addons {
                 //links
                 $html .= "<p class='omeka-addons-links'>";
                 $html .= "<span class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>Web page</a></span>";
-                $html .= "<span class='omeka-addons-support-link'><a href='" . $releases[0]['ini_data']['support_link'] . "'>Get Support</a></span>";
+                if(isset($releases[0]['ini_data']['support_link'])) {
+                    $html .= "<span class='omeka-addons-support-link'><a href='" . $releases[0]['ini_data']['support_link'] . "'>Get Support</a></span>";
+                }
+                
                 $html .= "</p>";
+                $license = isset($releases[0]['ini_data']['license']) ? $releases[0]['ini_data']['license'] : 'unknown';
+                $html .= "<p class='omeka-addons-license'><span>License</span>: $license</p>";
                 $html .= "<p class='omeka-addons-latest-release'>";
                 $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Latest Release: Version " . $releases[0]['ini_data']['version'] . "</a>";
                 $html .= "</p>";
@@ -675,3 +689,20 @@ class Omeka_Addons {
 endif;
 
 $omeka_addons = new Omeka_Addons();
+
+function omeka_addons_the_screenshot($theme_id) {
+    $args = array(
+      'post_parent' => $theme_id,
+      'post_type' => 'attachment',
+      'post_mime_type' => 'application/zip',
+      'order' => 'DESC',
+      'orderby' => 'post_date',
+      'numberposts' => 1
+    );
+    $attachment = array_pop(get_children($args));
+    
+    $releaseData = get_post_meta($attachment->ID, 'omeka_addons_release', true) ;
+    //print_r($releaseData);
+    echo $releaseData['screenshot'];
+    
+}
