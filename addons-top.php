@@ -26,9 +26,10 @@ Template Name: Addons Top
                 $recent_plugins = get_posts($args);
             ?>
             <?php foreach( $recent_plugins as $post ) :	setup_postdata($post); ?>
+            <?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
             	<div class="omeka-addon">
                 	<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-                	<?php the_content(); ?>
+                	<p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
             	</div>
             <?php endforeach; ?>
 
@@ -58,10 +59,11 @@ Template Name: Addons Top
                 $recent_themes = get_posts($args);
             ?>
             <?php foreach( $recent_themes as $post ) :	setup_postdata($post); ?>
+            <?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
             	<div class="omeka-addon">
                 	<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
                 	<img class="omeka-addons-screenshot" src="<?php omeka_addons_the_screenshot($post->ID); ?>" />
-                	<?php the_content(); ?>
+                	<p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
             	</div>
             <?php endforeach; ?>
         	<p class="featured-nav" id="omeka-addons-theme-featured">
