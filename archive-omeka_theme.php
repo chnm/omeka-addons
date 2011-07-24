@@ -1,6 +1,6 @@
 <?php get_header(); ?>
 
-	<div id="primary" class="omeka-addons-archive">
+	<div id="primary" class="omeka-addons-theme-archive">
 <h1>Themes</h1>
 		<?php query_posts($query_string . '&orderby=title&order=ASC&posts_per_page=-1'); ?>
 		<?php if (have_posts()) : while (have_posts()) : the_post(); ?>

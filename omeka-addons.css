@@ -127,8 +127,10 @@ img.omeka-addons-archive {
 	
 }
 
-div.omeka-addons-archive div.omeka-addon {
-	height: 200px;	
+div.omeka-addons-theme-archive div.omeka-addon {
+	height: 250px;	
 }
 
-	
+div.omeka-addons-theme-archive div.omeka-addon {
+	height: 200px;	
+}	
