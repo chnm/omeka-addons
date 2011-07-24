@@ -666,7 +666,7 @@ class Omeka_Addons {
                 $license = isset($releases[0]['ini_data']['license']) ? $releases[0]['ini_data']['license'] : 'unknown';
                 $html .= "<p class='omeka-addons-license'><span>License</span>: $license</p>";
                 $html .= "<p class='omeka-addons-latest-release'>";
-                $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Latest Release: Version " . $releases[0]['ini_data']['version'] . "</a>";
+                $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Download Latest: Ver. " . $releases[0]['ini_data']['version'] . "</a>";
                 $html .= "</p>";
                 $html .= "<h3>All Versions</h3>";
                 $html .= "<table width='100%'>
@@ -695,8 +695,14 @@ endif;
 $omeka_addons = new Omeka_Addons();
 
 function omeka_addons_the_screenshot($theme_id) {
+    $releaseData = omeka_addons_get_latest_release_data($theme_id);
+    echo $releaseData['screenshot'];
+    
+}
+
+function omeka_addons_get_latest_release_data($post_id) {
     $args = array(
-      'post_parent' => $theme_id,
+      'post_parent' => $post_id,
       'post_type' => 'attachment',
       'post_mime_type' => 'application/zip',
       'order' => 'DESC',
@@ -704,9 +710,7 @@ function omeka_addons_the_screenshot($theme_id) {
       'numberposts' => 1
     );
     $attachment = array_pop(get_children($args));
-    
     $releaseData = get_post_meta($attachment->ID, 'omeka_addons_release', true) ;
-    //print_r($releaseData);
-    echo $releaseData['screenshot'];
-    
+    return $releaseData;
+
 }

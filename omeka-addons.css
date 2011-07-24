@@ -121,4 +121,14 @@ ul.omeka-addons-term-list li {
 div#featured-plugins {
 	height: 450px;	
 }
+
+img.omeka-addons-archive {
+	float: right;	
+	
+}
+
+div.omeka-addons-archive div.omeka-addon {
+	height: 200px;	
+}
+
 	

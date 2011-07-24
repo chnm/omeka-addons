@@ -1,6 +1,6 @@
 <?php get_header(); ?>
 
-	<div id="primary">
+	<div id="primary" class="omeka-addons-archive">
 <h1>Plugins</h1>
 <p>The following plugins may be downloaded separately and installed to work with <strong>Omeka 1.0 or higher</strong>. Helpful instructions for installing plugins are on the <a href="http://omeka.org/codex/Managing_Plugins">codex</a>. If you are looking for plugins compatible with earlier versions of Omeka, see the list of <a href="/add-ons/plugins/010-plugins/">plugins compatible with Omeka 0.10</a> and <a href="/add-ons/plugins/09-plugins/">plugins compatible with Omeka 0.9</a>.</p>
 		<?php query_posts($query_string . '&orderby=title&order=ASC&posts_per_page=-1'); ?>
@@ -22,8 +22,13 @@
         		    echo $html;
         		?>
         		</div>
-		        <?php the_content(); ?>
-
+        		<?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
+		        <p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
+                <?php $license = isset($releaseData['ini_data']['license']) ? $releaseData['ini_data']['license'] : 'unknown'; ?>
+                <p class='omeka-addons-license'><span>License</span>: <?php echo $license; ?></p>
+                <p class='omeka-addons-latest-release'>
+                	<a class='omeka-addons-button' href='<?php echo $releaseData["zip_url"]; ?>'>Download Latest: Ver. <?php echo $releaseData['ini_data']['version']; ?></a>
+                </p>
 			</div>
 		<?php endwhile; endif; ?>
 
