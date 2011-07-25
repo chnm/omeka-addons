@@ -106,7 +106,8 @@ ul.omeka-addons-term-list li {
 }
 
 .omeka-addons-screenshot {
-	width: 250px;	
+	width: 250px;
+    border: 5px solid #EFEDD1;
 }
 
 .omeka-addon {
