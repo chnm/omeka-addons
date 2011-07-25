@@ -561,9 +561,14 @@ class Omeka_Addons {
           $releaseData['messages'][] = __('version must be set');
         }
         if(!isset($iniData['link'])) {
-          $releaseData['status'] = 'error';
+          $releaseData['status'] = 'warning';
           $releaseData['messages'][] = __('link must be set');
         }
+        if(!isset($iniData['support_link'])) {
+          $releaseData['status'] = 'error';
+          $releaseData['messages'][] = __('support_link must be set');
+        }
+                
         if(!isset($iniData['license'])) {
           if($releaseData['status'] != 'error') {
               $releaseData['status'] = 'warning';
@@ -590,9 +595,6 @@ class Omeka_Addons {
                 $releaseData['messages'][] = __("There is a more recent omeka version than the target version");
             }
         }
-
-        
-        
         
         return $releaseData;
     }

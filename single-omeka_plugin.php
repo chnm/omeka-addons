@@ -21,7 +21,6 @@
 		<?php the_content(); ?>
 		</div>
 	<?php endwhile; else: ?>
-
 		<p>Sorry, no posts matched your criteria.</p>
 
 <?php endif; ?>
