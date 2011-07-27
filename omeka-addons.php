@@ -41,6 +41,8 @@ class Omeka_Addons {
         add_action( 'omeka_addons_admin_init', array( $this, 'add_meta_boxes') );
         add_action( 'save_post', array( $this, 'save_post') );
         add_action( 'admin_head', array( $this, 'add_css') );
+        add_action( 'post_edit_form_tag' , array($this, 'post_edit_form_tag') );
+
 
         // activation sequence
         register_activation_hook( __FILE__, array($this, 'activation') );
@@ -82,6 +84,10 @@ class Omeka_Addons {
     function add_css() { ?>
    <link rel="stylesheet" href="<?php echo WP_PLUGIN_URL . '/omeka-addons/omeka-addons.css'; ?>">
    <?php
+    }
+    
+    function post_edit_form_tag( ) {
+        echo ' enctype="multipart/form-data"';
     }
     
     function add_role() {
@@ -250,12 +256,16 @@ class Omeka_Addons {
     }
 
     /**
-     * Meta box for plugin information.
+     * Meta box for plugin inf ormation.
      */
     function meta_box(){
         global $post;
 
-        $html = "";
+        $html = "<div id='omeka-addons-upload'>";
+        $html .= '<form enctype="multipart/form-data" action="__URL__" method="POST" >';
+        $html .= "<label for='omeka-addons-file'>Add:</label><input id='omeka-addons-file' type='file' name='omeka_addons_file' />";
+        $html .= "</form>";
+        $html .= "</div>";
         $releases = $this->get_releases($post);
         if($releases) {
             foreach($releases as $release) {
@@ -285,23 +295,31 @@ class Omeka_Addons {
     function save_post()
     {
         global $post;
-        $releases = $this->get_releases($post);
-        $args = array(
-          'post_parent' => $post->ID,
-          'post_type' => 'attachment',
-          'post_mime_type' => 'application/zip',
-          'order' => 'DESC',
-          'orderby' => 'post_date',
-          'numberposts' => 1
-        );
-        $attachments = get_children($args);
-        
-        if ($attachments) {
-            $last_attachment = array_pop($attachments);
-            $this->add_attachment_release($last_attachment);
-        }
-        if(!empty($_POST['omeka_addons_delete'])) {
-            $this->delete_releases($_POST['omeka_addons_delete']);
+        //$releases = $this->get_releases($post);
+        if(isset($_FILES['omeka_addons_file'])) {
+            $attachment_data = $_FILES['omeka_addons_file'];
+
+            if($this->_create_attachment($attachment_data) ) {
+   
+                $args = array(
+                  'post_parent' => $post->ID,
+                  'post_type' => 'attachment',
+                  'post_mime_type' => 'application/zip',
+                  'order' => 'DESC',
+                  'orderby' => 'post_date',
+                  'numberposts' => 1
+                );
+                $attachments = get_children($args);
+                
+                if ($attachments) {
+                    $last_attachment = array_pop($attachments);
+                    $this->add_attachment_release($last_attachment);
+                }
+            }
+    
+            if(!empty($_POST['omeka_addons_delete'])) {
+                $this->delete_releases($_POST['omeka_addons_delete']);
+            }
         }
     }
 
@@ -635,6 +653,28 @@ class Omeka_Addons {
         	'major' => substr(0, 2),
             'full' => $version
             );
+    }
+    
+    /*
+     * Manually creates a new attachment from a directly uploaded file
+     */
+    
+    function _create_attachment($data)
+    {
+        global $post;
+        $name = sanitize_file_name($data['name']);
+        $attachment = array(
+             'post_mime_type' => $data['type'],
+             'post_title' =>  $name,
+             'post_content' => '',
+             'post_status' => 'inherit'
+        );
+  
+        $attach_id = wp_insert_attachment( $attachment, $data['tmp_name'], $post->ID );
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        $attach_data = wp_generate_attachment_metadata( $attach_id, $data['tmp_name'] );
+        wp_update_attachment_metadata( $attach_id, $attach_data );
+        return true;
     }
     
     function addon_post_content($content)
