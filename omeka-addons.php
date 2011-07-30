@@ -92,7 +92,7 @@ class Omeka_Addons {
     
     function add_role() {
         //debug. uncomment remove_role below to work with fixing role settings
-        //remove_role('omeka_addon_contributor');
+        remove_role('omeka_addon_contributor');
         
         $result = add_role('omeka_addon_contributor', 'Addon Contributor', array(
             'edit_posts' => false,
@@ -266,6 +266,7 @@ class Omeka_Addons {
         $html .= "<label for='omeka-addons-file'>Add:</label><input id='omeka-addons-file' type='file' name='omeka_addons_file' />";
         $html .= "</form>";
         $html .= "</div>";
+
         $releases = $this->get_releases($post);
         if($releases) {
             foreach($releases as $release) {
@@ -296,7 +297,8 @@ class Omeka_Addons {
     {
         global $post;
         //$releases = $this->get_releases($post);
-        if(isset($_FILES['omeka_addons_file'])) {
+        if(isset($_FILES['omeka_addons_file']) && $_FILES['omeka_addons_file']['size'] !=0 ) {
+            
             $attachment_data = $_FILES['omeka_addons_file'];
 
             if($this->_create_attachment($attachment_data) ) {
@@ -325,9 +327,10 @@ class Omeka_Addons {
 
     function add_attachment_release($attachment) {
         global $post;
+        $uploads = wp_upload_dir();
         $zip_id = $attachment->ID;
         $path = get_attached_file($zip_id);
-        $url = $attachment->guid;
+        $url = $uploads['baseurl'] . "/" . $attachment->post_title;
         $iniData = $this->get_ini_data($path);
 
         if(is_wp_error($iniData)) {
@@ -344,7 +347,7 @@ class Omeka_Addons {
             $releaseData['ini_data'] = $iniData;
             $releaseData['modified'] = $attachment->post_modified;
             $releaseData['file_name'] = $attachment->post_title;
-            $releaseData['zip_url'] = $attachment->guid;
+            $releaseData['zip_url'] = $url;
             $releaseData['attachment_id'] = $attachment->ID;
             
             // no idea why I couldn't pass the data along in iniData, but it never worked right
@@ -669,10 +672,17 @@ class Omeka_Addons {
              'post_content' => '',
              'post_status' => 'inherit'
         );
-  
-        $attach_id = wp_insert_attachment( $attachment, $data['tmp_name'], $post->ID );
+        $uploads = wp_upload_dir();
+        $uploads_dir = $uploads['basedir'];
+        move_uploaded_file($data['tmp_name'], "$uploads_dir/$name");
+        //WP documentation says to use this pattern, but also says that generate
+        //attachment_metadata only works for images.
+        $attach_id = wp_insert_attachment( $attachment, "$uploads_dir/$name", $post->ID );
         require_once(ABSPATH . 'wp-admin/includes/image.php');
-        $attach_data = wp_generate_attachment_metadata( $attach_id, $data['tmp_name'] );
+        //$attach_data = wp_generate_attachment_metadata( $attach_id, "$uploads_dir/$name" );
+        $attach_data = array('guid' => $uploads['baseurl'] . "/$name");
+        print_r($attach_data);
+        
         wp_update_attachment_metadata( $attach_id, $attach_data );
         return true;
     }
