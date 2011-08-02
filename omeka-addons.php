@@ -318,10 +318,9 @@ class Omeka_Addons {
                     $this->add_attachment_release($last_attachment);
                 }
             }
-    
-            if(!empty($_POST['omeka_addons_delete'])) {
-                $this->delete_releases($_POST['omeka_addons_delete']);
-            }
+        }
+        if(!empty($_POST['omeka_addons_delete'])) {
+            $this->delete_releases($_POST['omeka_addons_delete']);
         }
     }
 
@@ -583,7 +582,7 @@ class Omeka_Addons {
         }
         if(!isset($iniData['link'])) {
           $releaseData['status'] = 'warning';
-          $releaseData['messages'][] = __('link must be set');
+          $releaseData['messages'][] = __('link must be set, even if it to the addons page');
         }
         if(!isset($iniData['support_link'])) {
           $releaseData['status'] = 'error';
