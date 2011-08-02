@@ -709,7 +709,11 @@ class Omeka_Addons {
                 }
                 //links
                 $html .= "<p class='omeka-addons-links'>";
-                $html .= "<span class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>Web page</a></span>";
+                
+                if(get_permalink($post->ID) != $releases[0]['ini_data']['link']) {
+                    $html .= "<span class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>More Info</a></span>";
+                }
+
                 if(isset($releases[0]['ini_data']['support_link'])) {
                     $html .= "<span class='omeka-addons-support-link'><a href='" . $releases[0]['ini_data']['support_link'] . "'>Get Support</a></span>";
                 }
