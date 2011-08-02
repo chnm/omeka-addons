@@ -99,9 +99,13 @@ class Omeka_Addons {
             'delete_posts' => false,
             'edit_omeka_plugins' => true,
             'edit_omeka_plugin' => true,
-            'publish_omeka_plugins' => false,
             'edit_omeka_themes' => true,
             'edit_omeka_theme' => true,
+            'delete_omeka_plugins' => true,
+            'delete_omeka_plugin' => true,
+            'delete_omeka_themes' => true,
+            'delete_omeka_theme' => true,
+        	'publish_omeka_plugins' => false,
             'publish_omeka_themes' => false,
             'upload_files' => true,
             'read' => true
@@ -319,6 +323,7 @@ class Omeka_Addons {
                 }
             }
         }
+
         if(!empty($_POST['omeka_addons_delete'])) {
             $this->delete_releases($_POST['omeka_addons_delete']);
         }
@@ -582,7 +587,7 @@ class Omeka_Addons {
         }
         if(!isset($iniData['link'])) {
           $releaseData['status'] = 'warning';
-          $releaseData['messages'][] = __('link must be set, even if it to the addons page');
+          $releaseData['messages'][] = __('link must be set, even if it goes to the addons page');
         }
         if(!isset($iniData['support_link'])) {
           $releaseData['status'] = 'error';
