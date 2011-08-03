@@ -277,12 +277,14 @@ class Omeka_Addons {
              
                 if( $release['new'] ) {
                     $html .= $this->_release_template_message_meta_box($release);
-                    $updated = $release;
-                    $updated['new'] = false;
-                    update_post_meta($release['attachment_id'], 'omeka_addons_release', $updated, $release);
                     if($release['status'] == 'error') {
                         $this->delete_releases(array($release['ini_data']['version']));
+                    } else {
+                        $updated = $release;
+                        $updated['new'] = false;
+                        update_post_meta($release['attachment_id'], 'omeka_addons_release', $updated, $release);
                     }
+                    
                 }
                 if($release['status'] != 'error') {
                     $html .= $this->_release_template_meta_box($release);
@@ -337,16 +339,7 @@ class Omeka_Addons {
         $url = $uploads['baseurl'] . "/" . $attachment->post_title;
         $iniData = $this->get_ini_data($path);
 
-        if(is_wp_error($iniData)) {
-            $releaseData = array(
-                            'status' => 'error',
-            				'curl_error'=> array(
-            				 	'code' => $iniData->get_error_code(),
-                                'message' => $iniData->get_error_message()
-                                ),
-                            'messages' => array()
-                            );
-        } else {
+        if($iniData) {
             $releaseData = $this->_validate_ini_data($iniData, $post->post_type);
             $releaseData['ini_data'] = $iniData;
             $releaseData['modified'] = $attachment->post_modified;
@@ -370,11 +363,19 @@ class Omeka_Addons {
                     }
                 }
             }
-            
+
+        } else {
+            $releaseData = array(
+                           		'status' => 'error',
+                                'messages' => array('Problem reading the zip file contents. Please check that it follows the correct structure'),
+                                'ini_data' => array('version' => 'error'), //to make deleting work
+                                'attachment_id' => $attachment->ID
+                            );
+            //@TODO: check if it is a Mac zip
         }
         $releaseData['new'] = true;
         add_post_meta($zip_id, "omeka_addons_release", $releaseData);
-        return $releaseData;
+
     }
     
     function get_ini_data($path)
@@ -460,6 +461,7 @@ class Omeka_Addons {
                 exec($rmAddonDir, $output, $return_var);
                 return $ini_array;
             }
+            return false;
         }
     }
     
