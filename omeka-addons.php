@@ -408,6 +408,13 @@ class Omeka_Addons {
             if ($iniFile) {
                 $ini_array = parse_ini_file($iniFile);
                 
+                if(!preg_match('/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i', $ini_array['link'])) {
+                    $ini_array['link'] = 'http://' . $ini_array['link'];
+                }
+                if(!preg_match('/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i', $ini_array['support_link'])) {
+                   $ini_array['support_link'] = 'http://' . $ini_array['support_link'];
+                }
+                
                 //hacking some things until ini data is consistent between themes and plugins
                 //Omeka 1.5 will enforce the rules
                 $this->_normalize_ini($ini_array);
