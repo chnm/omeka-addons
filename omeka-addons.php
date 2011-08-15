@@ -797,7 +797,9 @@ class Omeka_Addons {
                 
                 if(isset($releases[0]['screenshot'])) {
                     $screenshot = $releases[0]['screenshot'];
+                    $html .= "<a src='$screenshot'>";
                     $html .= "<img class='omeka-addons-screenshot' src='$screenshot' />";
+                    $html .= "</a>";
                 }
                 //links
                 $html .= "<p class='omeka-addons-links'>";
