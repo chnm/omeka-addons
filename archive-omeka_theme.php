@@ -6,7 +6,7 @@
 		<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 		
 			<div class="omeka-addon" id="post-<?php the_ID(); ?>">
-		        <img class='omeka-addons-screenshot omeka-addons-archive' src="<?php omeka_addons_the_screenshot($post->ID)?>" />
+		        <a href="<?php omeka_addons_the_screenshot($post->ID)?>"><img class='omeka-addons-screenshot omeka-addons-archive' src="<?php omeka_addons_the_screenshot($post->ID)?>" /></a>
 				<h2><a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent Link to <?php the_title(); ?>"><?php the_title(); ?></a></h2>
         		<?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
 		        <p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
