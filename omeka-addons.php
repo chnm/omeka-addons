@@ -50,6 +50,7 @@ class Omeka_Addons {
         // deactivation sequence
         register_deactivation_hook( __FILE__, array($this, 'deactivation') );
 
+
         add_filter( 'the_content', array($this, 'addon_post_content') );
     }
 
@@ -57,6 +58,11 @@ class Omeka_Addons {
         do_action( 'omeka_addons_init' );
     }
 
+    function addon_post_perms($post_columns, $post_type) {
+        $post_columns['test'] = print_r($post_columns, true);
+        return $post_columns;
+        
+    }
     /**
      * Adds a plugin admin initialization action.
      */
@@ -93,22 +99,30 @@ class Omeka_Addons {
     function add_role() {
         //debug. uncomment remove_role below to work with fixing role settings
         remove_role('omeka_addon_contributor');
-        
+      
         $result = add_role('omeka_addon_contributor', 'Addon Contributor', array(
-            'edit_posts' => false,
+
+            'delete_others_posts' => false,
             'delete_posts' => false,
             'edit_omeka_plugins' => true,
             'edit_omeka_plugin' => true,
             'edit_omeka_themes' => true,
             'edit_omeka_theme' => true,
-            'delete_omeka_plugins' => true,
-            'delete_omeka_plugin' => true,
-            'delete_omeka_themes' => true,
-            'delete_omeka_theme' => true,
+            'delete_omeka_plugins' => false,
+            'delete_omeka_plugin' => false,
+            'delete_omeka_themes' => false,
+            'delete_omeka_theme' => false,
         	'publish_omeka_plugins' => false,
             'publish_omeka_themes' => false,
             'upload_files' => true,
-            'read' => true
+            'read' => true,
+            'edit_posts' => false,
+            'edit_post' => false,
+            'delete_posts' => false,
+            'edit_others_posts' => false,
+            'edit_others_omeka_plugins' => false,
+            'delete_others_omeka_plugin' => false,
+            'delete_others_omeka_plugins' => false,
         ));
         
         $admin = get_role('administrator');
@@ -131,6 +145,7 @@ class Omeka_Addons {
         foreach($admin_caps as $cap) {
             $admin->add_cap($cap);
         }
+       // */
     }
     /**
      * Registers our 'omeka_plugin' and 'omeka_theme' custom post types.
@@ -156,6 +171,7 @@ class Omeka_Addons {
             'label'                 => __('plugin', 'omeka-addons'),
             'labels'                => $omekaPluginLabels,
             'public'                => true,
+        	'hierarchical'          => true,
             'show_ui'               => true,
             'capability_type'       => 'omeka_plugin',
             $caps = array(
@@ -213,7 +229,6 @@ class Omeka_Addons {
             'show_in_nav_menus'     => true,
             //'map_meta_cap' => true,
             'has_archive'           => 'add-ons/themes',
-            'hierarchical'          => true,
             'supports'              => array('title', 'editor', 'author'),
             'rewrite'               => array("slug" => 'add-ons/themes', 'with_front'=>false)
         );
@@ -272,6 +287,7 @@ class Omeka_Addons {
         $html .= "</div>";
 
         $messages_html = "";
+       
         $releases_html = "";
         $releases = $this->get_releases($post);
         if($releases) {
@@ -530,9 +546,9 @@ class Omeka_Addons {
         $html = "<div class='omeka-addons-release'>";
         if ($release && isset($release['ini_data'])) {
             $version = $release['ini_data']['version'];
-            $html .= "<h3>Version " . $version;
+            $html .= "<h4 class='omeka-addons-h'>Version " . $version;
             $html .= "<span class='omeka-addons-delete'><input type='checkbox' name='omeka_addons_delete[]' value='$version' />";
-            $html .= "<label for='omeka_addons_delete'>Delete?</label></span></h3>";
+            $html .= "<label for='omeka_addons_delete'>Delete?</label></span></h4>";
             $html .= "<dt>Zip URL:</dt><dd>" . $release['zip_url'] . "</dd><br />";
             if( isset($release['ini_data']) && !empty($release['ini_data'])) {
                 foreach($release['ini_data'] as $key=>$value) {
@@ -698,10 +714,10 @@ class Omeka_Addons {
             $ini_array['omeka_target_version'] = 'unknown';
         }
             
-        if(!preg_match('/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i', $ini_array['link'])) {
+        if( !empty($ini_array['link']) && !preg_match('/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i', $ini_array['link'])) {
             $ini_array['link'] = 'http://' . $ini_array['link'];
         }
-        if(!preg_match('/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i', $ini_array['support_link'])) {
+        if( !empty($ini_array['support_link']) && !preg_match('/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i', $ini_array['support_link'])) {
            $ini_array['support_link'] = 'http://' . $ini_array['support_link'];
         }
     }

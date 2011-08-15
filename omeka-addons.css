@@ -115,6 +115,10 @@ ul.omeka-addons-term-list li {
 	
 }
 
+.omeka-addons-h {
+	font-size: 12pt;	
+}
+
 .featured-addons .omeka-addon {
 	clear: none;	
 }
