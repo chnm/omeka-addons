@@ -50,7 +50,6 @@ class Omeka_Addons {
         // deactivation sequence
         register_deactivation_hook( __FILE__, array($this, 'deactivation') );
 
-
         add_filter( 'the_content', array($this, 'addon_post_content') );
     }
 
@@ -529,11 +528,12 @@ class Omeka_Addons {
        }
     }
     
-    function release_template($release)
+    function release_template($release, $i)
     {
         $html = "";
+        $class = $i % 2 ? 'even' : 'odd';
         $downloadTitleText = "Download version " . $release['ini_data']['version'];
-        $html .= "<tr>";
+        $html .= "<tr class='$class'>";
         $html .= "<td><a title='$downloadTitleText' href='" . $release['zip_url']  . "'>" . $release['ini_data']['version'] . "</a></td>";
         $html .= "<td>" . $release['ini_data']['omeka_minimum_version'] . "</td>";
         $html .= "<td>" . $release['ini_data']['omeka_target_version'] . "</td>";
@@ -788,38 +788,40 @@ class Omeka_Addons {
             $releases = $this->get_releases($post);
             $html = "";
             if ($releases) {
-                $pre_content = "<div class='omeka-addons-content'>"  . "<p class='omeka-addons-author'>";
-                $pre_content .= $releases[0]['ini_data']['author'] . "</p>";
+                $pre_content = "<div class='omeka-addons-content'>";
                 $pre_content .= "<p class='omeka-addons-description'>" . $releases[0]['ini_data']['description'] . "</p>";
                 $content = $pre_content . $content . "</div>";
 
                 $html .= "<div class='omeka-addons-addon-info'>";
-                
-                if(isset($releases[0]['screenshot'])) {
-                    $screenshot = $releases[0]['screenshot'];
-                    $html .= "<a href='$screenshot'>";
-                    $html .= "<img class='omeka-addons-screenshot' src='$screenshot' />";
-                    $html .= "</a>";
-                }
+
                 //links
-                $html .= "<p class='omeka-addons-links'>";
+                $html .= "<div class='omeka-addons-links'>";
                 
                 if(get_permalink($post->ID) != $releases[0]['ini_data']['link']) {
-                    $html .= "<span class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>More Info</a></span>";
+                    $html .= "<p class='omeka-addons-link'><a href='" . $releases[0]['ini_data']['link'] . "'>More Info</a></p>";
                 }
 
                 if(isset($releases[0]['ini_data']['support_link'])) {
-                    $html .= "<span class='omeka-addons-support-link'><a href='" . $releases[0]['ini_data']['support_link'] . "'>Get Support</a></span>";
+                    $html .= "<p class='omeka-addons-support-link'><a href='" . $releases[0]['ini_data']['support_link'] . "'>Get Support</a></p>";
                 }
                 
-                $html .= "</p>";
+                $html .= "</div>";
+                
                 $license = isset($releases[0]['ini_data']['license']) ? $releases[0]['ini_data']['license'] : 'unknown';
-                $html .= "<p class='omeka-addons-license'><span>License</span>: $license</p>";
+                $html .= "<div class='omeka-addons-license'><p><span>License</span>: $license</p></div>";
+                
+                            
+                if(isset($releases[0]['screenshot'])) {
+                    $screenshot = $releases[0]['screenshot'];
+                    $html .= "<a class='omeka-addons-screenshot' href='$screenshot'>";
+                    $html .= "<img class='omeka-addons-screenshot' src='$screenshot' />";
+                    $html .= "</a>";
+                }
                 $html .= "<p class='omeka-addons-latest-release'>";
                 $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Download Latest: Ver. " . $releases[0]['ini_data']['version'] . "</a>";
                 $html .= "</p>";
                 $html .= "<h3>All Versions</h3>";
-                $html .= "<table width='100%'>
+                $html .= "<table class='omeka-addons-versions' width='100%'>
                     <thead>
                         <tr>
                             <th>Available Versions</th>
@@ -828,8 +830,8 @@ class Omeka_Addons {
                         </tr>
                     </thead>
                     ";
-                foreach($releases as $release) {
-                    $html .= $this->release_template($release);
+                foreach($releases as $i=>$release) {
+                    $html .= $this->release_template($release, $i);
                 }
                 $html .= "</tbody></table></div>";
             $content = $content . $html;
@@ -847,6 +849,11 @@ $omeka_addons = new Omeka_Addons();
 function omeka_addons_the_screenshot($theme_id) {
     $releaseData = omeka_addons_get_latest_release_data($theme_id);
     echo $releaseData['screenshot'];
+}
+
+function omeka_addons_by($post_id) {
+    $releaseData = omeka_addons_get_latest_release_data($post_id);
+    echo "<span class='omeka-addons-by'> by " . $releaseData['ini_data']['author'] . "</span>";
 }
 
 function omeka_addons_get_latest_release_data($post_id) {
