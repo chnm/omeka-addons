@@ -43,9 +43,12 @@ div#omeka-addons-messages p.omeka-addons-upload-error {
     width: 46%;
 	background-color: #7E7566;    
 	padding: 2em;
-	margin-bottom: 2em;
-	position: relative;
-	right: -2em;
+	margin: -18px -18px 2em 0;
+	
+}
+
+div.omeka-addons-addon-info h3 {
+	color: white;	
 }
 
 .omeka-addons-versions-list {
@@ -85,15 +88,16 @@ div#omeka-addons-messages p.omeka-addons-upload-error {
 
 div.omeka-addons-links {
 	float: right;
-		
+	border-top: 1px dotted white;
+	width: 100px;
 }
 
 div.omeka-addons-links > p {
 	background-color: #4F473C;
-	padding: 1em;
+	padding: .5em;
 	margin-bottom: 0;
-	border-top: 1px dotted white;
 	border-bottom: 1px dotted white;
+	font-weight: bold;
 }
 
 div.omeka-addons-links a {
@@ -172,6 +176,7 @@ table.omeka-addons-versions th {
 	color: #A8A39A;	
 	text-align: left;
 	padding-left: 1em;
+	padding-top: .5em;
 }
 
 table.omeka-addons-versions td {
@@ -179,6 +184,7 @@ table.omeka-addons-versions td {
 }
 table.omeka-addons-versions tr.odd {
 	background-color: #EBE8DF;
+	border: none;
 }
 
 table.omeka-addons-versions tr.even {
@@ -196,3 +202,4 @@ div.omeka-addons-plugin-archive div.omeka-addon {
 span.omeka-addons-by {
 	font-size: 14pt;	
 }
+
