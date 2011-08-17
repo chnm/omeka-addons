@@ -124,7 +124,7 @@ ul.omeka-addons-term-list {
 ul.omeka-addons-term-list li {
 	display: inline;
 	list-style: none;		
-	margin-left: .5em;
+	margin-right: .5em;
 }
 
 .omeka-addons-author {
