@@ -21,6 +21,10 @@ Template Name: Addons Top
 
 		<div id="featured-plugins" class="featured-addons">
             <h2>Latest Plugins</h2>
+        	<p class="featured-nav"  id="omeka-addons-plugin-featured">
+        		<a id="download-plugins" href="/addons/plugins">Browse Plugins</a>
+        		<a href="/get-involved/develop/">Build a Plugin</a>
+        	</p>
             <?php
                 $args = array('post_type'=>'omeka_plugin', 'numberposts'=>2, 'orderby'=>'modified' , 'order'=>'DESC');
                 $recent_plugins = get_posts($args);
@@ -33,10 +37,7 @@ Template Name: Addons Top
             	</div>
             <?php endforeach; ?>
 
-        	<p class="featured-nav"  id="omeka-addons-plugin-featured">
-        		<a id="download-plugins" href="/addons/plugins">Browse Plugins</a>
-        		<a href="/get-involved/develop/">Build a Plugin</a>
-        	</p>
+
         	<div class="omeka-addons-cats">
         		<p>You can also browse plugins by category:</p>
             	<?php
@@ -54,6 +55,10 @@ Template Name: Addons Top
         </div>
 		<div id="featured-themes" class="featured-addons">
             <h2>Latest Themes</h2>
+        	<p class="featured-nav" id="omeka-addons-theme-featured">
+            	<a id="download-themes" href="/addons/themes">Browse Themes</a>
+            	<a href="/get-involved/design/">Design a Theme</a>
+        	</p>
             <?php
                 $args['post_type'] = 'omeka_theme';
                 $recent_themes = get_posts($args);
@@ -66,10 +71,7 @@ Template Name: Addons Top
                 	<p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
             	</div>
             <?php endforeach; ?>
-        	<p class="featured-nav" id="omeka-addons-theme-featured">
-            	<a id="download-themes" href="/addons/themes">Browse Themes</a>
-            	<a href="/get-involved/design/">Design a Theme</a>
-        	</p>
+
         </div>
 </div>
 <?php get_footer(); ?>

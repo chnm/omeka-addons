@@ -830,7 +830,7 @@ class Omeka_Addons {
                 $html .= "</div>";
                 
                 $license = isset($releases[0]['ini_data']['license']) ? $releases[0]['ini_data']['license'] : 'unknown';
-                $html .= "<div class='omeka-addons-license'><p><span>License</span>: $license</p></div>";
+                $html .= "<div class='omeka-addons-license'><p>License: $license</p></div>";
                 
                             
                 if(isset($releases[0]['screenshot'])) {

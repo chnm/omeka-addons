@@ -118,7 +118,9 @@ div.omeka-addons-license {
 
 div.omeka-addons-license > p {
 	color: white;
-	padding: 1em;
+	width: 100px;
+	padding-top: .5em;
+	margin-right: -.5em;
 }	
 
 .omeka-addons-delete {
@@ -163,6 +165,10 @@ p.omeka-addons-latest-release {
 
 .omeka-addons-h {
 	font-size: 12pt;	
+}
+
+div.featured-addons {
+	width: 47%;	
 }
 
 .featured-addons .omeka-addon {
