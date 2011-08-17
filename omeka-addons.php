@@ -355,6 +355,7 @@ class Omeka_Addons {
         $path = get_attached_file($zip_id);
         $url = $uploads['baseurl'] . "/" . $attachment->post_title;
         $iniData = $this->get_ini_data($path);
+    
         if($iniData) {
             $releaseData = $this->_validate_ini_data($iniData);
             $releaseData['ini_data'] = $iniData;
@@ -379,6 +380,18 @@ class Omeka_Addons {
                     }
                 }
             }
+            if(isset($iniData['error'])) {
+                switch($iniData['error']) {
+                    case 'mac':
+                        $releaseData = array(
+                                       		'status' => 'error',
+                                            'messages' => array('Looks like this was zipped on a Mac, and will not install correctly'),
+                                            'ini_data' => array('version' => 'error'), //to make deleting work
+                                            'attachment_id' => $attachment->ID
+                                        );
+                    break;
+                }
+            }
         } else {
             $releaseData = array(
                            		'status' => 'error',
@@ -389,7 +402,7 @@ class Omeka_Addons {
             //@TODO: check if it is a Mac zip
         }
         
-        if($attachment->post_title == 'fail') {
+        if($attachment->post_title == 'version-fail') {
             $releaseData = array(
                                 'status' => 'error',
                                 'messages' => array('There was a conflict with the version number and filename'),
@@ -399,7 +412,6 @@ class Omeka_Addons {
         }
         
         $releaseData['new'] = true;
-        
         add_post_meta($zip_id, "omeka_addons_release", $releaseData);
     }
     
@@ -418,10 +430,14 @@ class Omeka_Addons {
         exec($shellCommand, $output, $return_var);
 
         $tempDirContents = scandir($tempDir, 1);
-        
+        $addonFolder = $tempDirContents[0];
+        $addonFolderPath = $tempDir. '/'. $addonFolder;
+
+        if(in_array('__MACOSX', scandir($tempDir))) {
+            $ini_array = array('error'=>'mac');
+            return $ini_array;
+        }
         if (count($tempDirContents) == 3) {
-            $addonFolder = $tempDirContents[0];
-            $addonFolderPath = $tempDir. '/'. $addonFolder;
 
             if (file_exists($addonFolderPath .'/theme.ini')) {
                 $iniFile = $addonFolderPath .'/theme.ini';
@@ -599,6 +615,7 @@ class Omeka_Addons {
         //want in the form of name-#.# , e.g. MyAddon-1.2 with 1.2 matching the version
         $name_parts = pathinfo($filename);
         $exploded_name = explode('-', $name_parts['filename']);
+
         if(isset($exploded_name[1]) && (version_compare($exploded_name[1], $version) === 0) ) {
             return $filename;
         }
@@ -607,7 +624,7 @@ class Omeka_Addons {
             return $exploded_name[0] . '-' . $version . '.' . $name_parts['extension'];
         }
         //makes an error downstream
-        return 'fail';
+        return 'version-fail';
         
     }
     
@@ -745,7 +762,12 @@ class Omeka_Addons {
         $uploads_dir = $uploads['basedir'];
         
         $iniData = $this->get_ini_data($data['tmp_name'], true);
-        $name = $this->_normalize_file_name($name, $iniData['version']);
+        if($iniData && !isset($iniData['error'])) {
+            $name = $this->_normalize_file_name($name, $iniData['version']);
+        } else {
+             $name = 'ini-parse-fail';
+        }
+        
         $filename = "$uploads_dir/$name";
         if(file_exists($filename)) {
 
@@ -866,6 +888,8 @@ function omeka_addons_get_latest_release_data($post_id) {
       'numberposts' => 1
     );
     $attachment = array_pop(get_children($args));
-    $releaseData = get_post_meta($attachment->ID, 'omeka_addons_release', true) ;
-    return $releaseData;
+    if($attachment) {
+        $releaseData = get_post_meta($attachment->ID, 'omeka_addons_release', true) ;
+        return $releaseData;
+    }
 }
