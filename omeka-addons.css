@@ -44,11 +44,17 @@ div#omeka-addons-messages p.omeka-addons-upload-error {
 	background-color: #7E7566;    
 	padding: 2em;
 	margin: -18px -18px 2em 0;
-	
+	padding-bottom: 20010px;
+	margin-bottom: -20000px;
+}
+
+.padding {
+	overflow: hidden;	
 }
 
 div.omeka-addons-addon-info h3 {
 	color: white;	
+	clear: both;
 }
 
 .omeka-addons-versions-list {
@@ -152,6 +158,7 @@ img.omeka-addons-screenshot {
 
 p.omeka-addons-latest-release {
 	margin-top: 15px;	
+
 }
 
 .omeka-addons-h {
