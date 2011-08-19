@@ -5,7 +5,12 @@
 		<div id="post-<?php the_ID(); ?>">
 			<h1><?php the_title();  omeka_addons_by($post->ID);  ?></h1>
 		<div class="omeka-addon">
+
+		
+		    <?php the_content(); ?>
+		</div>
 		<div class="omeka-addons-cats">
+		<h3>Plugin categories:</h3>
 		<?php
 		    $terms = wp_get_post_terms( get_the_ID(), 'omeka_plugin_types');
 		    $html = '';
@@ -17,8 +22,6 @@
 		    $html .= "</ul>";
 		    echo $html;
 		?>
-		</div>
-		<?php the_content(); ?>
 		</div>
 	<?php endwhile; else: ?>
 		<p>Sorry, no posts matched your criteria.</p>

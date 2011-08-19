@@ -212,8 +212,8 @@ div.omeka-addons-plugin-archive div.omeka-addon {
 
 }	
 
-div.omeka-addons-cats {
-	width: 46%;	
+#addon-post div.omeka-addons-cats {
+	
 }
 
 span.omeka-addons-by {
