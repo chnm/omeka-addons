@@ -212,8 +212,30 @@ div.omeka-addons-plugin-archive div.omeka-addon {
 
 }	
 
-#addon-post div.omeka-addons-cats {
+
+div.omeka-addons-plugin-archive p.omeka-addons-latest-release {
 	
+}
+
+div.omeka-addons-plugin-archive p.omeka-addons-license {
+
+}
+
+div.omeka-addons-plugin-archive div.omeka-addons-download-block {
+	float: right;	
+}
+
+div.omeka-addons-taxonomy div.omeka-addons-download-block {
+	float: right;	
+}
+	
+
+div.omeka-addons-taxonomy p.omeka-addons-latest-release {
+	
+}
+
+div.omeka-addons-taxonomy p.omeka-addons-license {
+
 }
 
 span.omeka-addons-by {
