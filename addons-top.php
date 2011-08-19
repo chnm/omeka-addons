@@ -12,8 +12,6 @@ Template Name: Addons Top
 		<h1><?php the_title(); ?></h1>
 		<div class="addons-wrapper">
 			<?php the_content(); ?>
-
-
 		</div>
 	</div>
 
@@ -67,7 +65,7 @@ Template Name: Addons Top
             <?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
             	<div class="omeka-addon">
                 	<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-                	<img class="omeka-addons-screenshot" src="<?php omeka_addons_the_screenshot($post->ID); ?>" />
+                	<a href="<?php the_permalink(); ?>"><img class="omeka-addons-screenshot" src="<?php omeka_addons_the_screenshot($post->ID); ?>" /></a>
                 	<p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
             	</div>
             <?php endforeach; ?>
