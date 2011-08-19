@@ -840,7 +840,7 @@ class Omeka_Addons {
                     $html .= "</a>";
                 }
                 $html .= "<p class='omeka-addons-latest-release'>";
-                $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Download Latest: Ver. " . $releases[0]['ini_data']['version'] . "</a>";
+                $html .= "<a class='omeka-addons-button' href='" . $releases[0]['zip_url'] . "'>Download Latest</a>";
                 $html .= "</p>";
                 $html .= "<h3>All Versions</h3>";
                 $html .= "<table class='omeka-addons-versions' width='100%'>
