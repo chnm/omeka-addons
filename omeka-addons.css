@@ -212,6 +212,10 @@ div.omeka-addons-plugin-archive div.omeka-addon {
 
 }	
 
+div.omeka-addons-cats {
+	width: 46%;	
+}
+
 span.omeka-addons-by {
 	font-size: 14pt;	
 }
