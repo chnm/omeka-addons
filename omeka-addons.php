@@ -846,7 +846,7 @@ class Omeka_Addons {
                 $html .= "<table class='omeka-addons-versions' width='100%'>
                     <thead>
                         <tr>
-                            <th>Available Versions</th>
+                            <th>Addon Version</th>
                             <th>Minimum Omeka Version</th>
                             <th>Target Omeka Version</th>
                         </tr>
