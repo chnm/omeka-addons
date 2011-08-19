@@ -39,11 +39,11 @@ Template Name: Addons Top
 
 
         	<div class="omeka-addons-cats">
-        		<p>You can also browse plugins by category:</p>
+        		<h3>You can also browse plugins by category:</h3>
             	<?php
             	    $terms = get_terms( 'omeka_plugin_types', array('orderby'=>'name' ));
             	    $html = '';
-            	    $html .= "<ul class='omeka-addons-term-list'>";
+            	    $html .= "<ul>";
             	    foreach($terms as $term) {
             	        $link = get_term_link($term);
             	        $html .= "<li><a href='$link'>$term->name</a></li>";
