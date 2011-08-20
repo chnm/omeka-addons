@@ -6,7 +6,7 @@
 
 		<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 		<?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
-			<div id="post-<?php the_ID(); ?>">
+			<div id="post-<?php the_ID(); ?>" class="omeka-addon">
 			<div class="omeka-addons-download-block">
                 <p class='omeka-addons-latest-release'>
                 	<a class='omeka-addons-button' href='<?php echo $releaseData["zip_url"]; ?>'>Download Latest</a>
@@ -15,11 +15,18 @@
                 <p class='omeka-addons-license'><span>License</span>: <?php echo $license; ?></p>
             </div>
 				<h2><a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent Link to <?php the_title(); ?>"><?php the_title(); ?></a></h2>
+
+        		<?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
+		        <p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
         				
         		<div class="omeka-addons-cats">
+        		
         		<?php
         		    $terms = wp_get_post_terms( get_the_ID(), 'omeka_plugin_types');
         		    $html = '';
+        		    if(!empty($terms)) {
+        		        $html .= "<h3>Categories:</h3>";
+        		    }
         		    $html .= "<ul class='omeka-addons-term-list'>";
         		    foreach($terms as $term) {
         		        $link = get_term_link($term);
@@ -29,7 +36,7 @@
         		    echo $html;
         		?>
         		</div>
-		        <?php the_content(); ?>
+		        
 			</div>
 
 		<?php endwhile; endif; ?>

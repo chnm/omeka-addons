@@ -142,11 +142,6 @@ ul.omeka-addons-term-list li {
 .omeka-addons-author {
 	font-weight: bold;	
 }
-	
-	
-#omeka-addons-theme-featured {
-	clear: none;	
-}
 
 img.omeka-addons-screenshot {
 	width: 250px;
@@ -167,17 +162,6 @@ p.omeka-addons-latest-release {
 	font-size: 12pt;	
 }
 
-div.featured-addons {
-	width: 47%;	
-}
-
-.featured-addons .omeka-addon {
-	clear: none;	
-}
-
-div#featured-plugins {
-	float: right
-}
 
 img.omeka-addons-archive {
 	float: right;	
@@ -221,12 +205,22 @@ div.omeka-addons-plugin-archive p.omeka-addons-license {
 
 }
 
+div.omeka-addons-plugin-archive div.omeka-addon {
+	margin-bottom: 18px;	
+}
+
+div.omeka-addons-taxonomy div.omeka-addon {
+	margin-bottom: 18px;	
+}
+
 div.omeka-addons-plugin-archive div.omeka-addons-download-block {
-	float: right;	
+	float: right;
+	margin-left: 18px;
 }
 
 div.omeka-addons-taxonomy div.omeka-addons-download-block {
-	float: right;	
+	float: right;
+	margin-left: 18px;
 }
 	
 
@@ -240,5 +234,80 @@ div.omeka-addons-taxonomy p.omeka-addons-license {
 
 span.omeka-addons-by {
 	font-size: 14pt;	
+	line-height: 1;
 }
 
+/* Addons-top Template */
+
+	
+div.omeka-addons-top-plugins {
+	width: 42%;
+	float: right;
+}
+
+div.omeka-addons-top-themes {
+	width: 55%;
+	float: left;
+}
+
+
+
+div#omeka-addons-top div.omeka-addons-cats {
+	background-color: #EFEDD1;
+	padding: 9px;
+	border: 6px solid white;
+		
+}
+
+
+
+div#omeka-addons-top p.omeka-addons-description {
+	background-color: #EFEDD1;
+	padding: 6px;
+	border-top: 1px dotted black;
+	border-bottom: 1px dotted black;	
+	margin-top: 18px;
+}
+
+div.omeka-addons-top-themes p.omeka-addons-description {
+	width: 37%;	
+}
+
+
+div#omeka-addons-top div.omeka-addon {
+	margin-bottom: 18px;
+}
+
+div.omeka-addons-col-head {
+	margin-bottom: 24px;		
+	
+}
+
+div.omeka-addons-col-head > h2 {
+	display: inline;
+	
+}
+
+div.omeka-addons-col-head > p {
+	display: inline;
+	border-top: 1px dotted black;
+	border-bottom: 1px dotted black;
+	text-transform: uppercase;
+	padding: 4px 4px;	
+	
+}
+
+div.omeka-addons-col-head  a {
+	text-decoration: none;
+}
+
+
+div.omeka-addons-top-themes img.omeka-addons-screenshot {
+	float: right;
+	
+}
+
+.clear {
+	clear:both;	
+	margin-bottom: 12px;
+}

@@ -15,11 +15,18 @@
                 <p class='omeka-addons-license'><span>License</span>: <?php echo $license; ?></p>
             </div>
 				<h2><a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent Link to <?php the_title(); ?>"><?php the_title(); ?></a></h2>
+
+        		<?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
+		        <p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
         				
         		<div class="omeka-addons-cats">
+        		
         		<?php
         		    $terms = wp_get_post_terms( get_the_ID(), 'omeka_plugin_types');
         		    $html = '';
+        		    if(!empty($terms)) {
+        		        $html .= "<h3>Categories:</h3>";
+        		    }
         		    $html .= "<ul class='omeka-addons-term-list'>";
         		    foreach($terms as $term) {
         		        $link = get_term_link($term);
@@ -29,9 +36,6 @@
         		    echo $html;
         		?>
         		</div>
-        		<?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
-		        <p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
-
 			</div>
 		<?php endwhile; endif; ?>
 

@@ -10,10 +10,13 @@
 		    <?php the_content(); ?>
 		</div>
 		<div class="omeka-addons-cats">
-		<h3>Plugin categories:</h3>
+	
 		<?php
 		    $terms = wp_get_post_terms( get_the_ID(), 'omeka_plugin_types');
 		    $html = '';
+  		    if(!empty($terms)) {
+		        $html .= "<h3>Categories:</h3>";
+		    }
 		    $html .= "<ul class='omeka-addons-term-list'>";
 		    foreach($terms as $term) {
 		        $link = get_term_link($term);
