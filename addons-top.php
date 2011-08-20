@@ -22,8 +22,8 @@ Template Name: Addons Top
         	<div class="omeka-addons-col-head">
         		<h2>Plugins</h2>
             	<p>
-            		<a id="download-plugins" href="/addons/plugins">Browse Plugins</a> &#x25CA;
-            		<a href="/get-involved/develop/">Build a Plugin</a>
+            		<a id="download-plugins" href="/addons/plugins">All Plugins</a> &#x25CA;
+            		<a href="/get-involved/develop/">Build a new plugin</a>
             	</p>
         	</div>
         	<h3>Most recently updated plugins</h3>
@@ -59,8 +59,8 @@ Template Name: Addons Top
 			<div class="omeka-addons-col-head">
     			<h2>Themes</h2>
             	<p>
-                	<a id="download-themes" href="/addons/themes">View all themes</a> &#x25CA;
-                	<a href="/get-involved/design/">Design a theme</a>
+                	<a id="download-themes" href="/addons/themes">All themes</a> &#x25CA;
+                	<a href="/get-involved/design/">Design a new theme</a>
             	</p>
 			</div>
             <h3>Most recently updated themes</h3>
