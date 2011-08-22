@@ -243,6 +243,10 @@ span.omeka-addons-by {
 div.omeka-addons-top-plugins {
 	width: 42%;
 	float: right;
+	box-shadow: -3px 0 6px rgba(0, 0, 0, .2);
+	padding-left: 9px;
+	margin-bottom: -500px;
+	padding-bottom: 510px;
 }
 
 div.omeka-addons-top-themes {
@@ -250,16 +254,13 @@ div.omeka-addons-top-themes {
 	float: left;
 }
 
-
-
 div#omeka-addons-top div.omeka-addons-cats {
 	background-color: #EFEDD1;
 	padding: 9px;
 	border: 6px solid white;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 		
 }
-
-
 
 div#omeka-addons-top p.omeka-addons-description {
 	background-color: #EFEDD1;
@@ -294,7 +295,7 @@ div.omeka-addons-col-head > p {
 	border-bottom: 1px dotted black;
 	text-transform: uppercase;
 	padding: 4px 4px;	
-	
+	font-family: Georgia,Times,serif;
 }
 
 div.omeka-addons-col-head  a {
