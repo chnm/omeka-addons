@@ -71,12 +71,11 @@ Template Name: Addons Top
             ?>
             <?php foreach( $recent_themes as $post ) :	setup_postdata($post); ?>
             <?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
-            	<div class="omeka-addon">
+            	<div class="omeka-addon group">
                 	<a href="<?php the_permalink(); ?>"><img class="omeka-addons-screenshot" src="<?php omeka_addons_the_screenshot($post->ID); ?>" /></a>
                 	<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
                 	<p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
             	</div>
-            	<div class="clear"> </div>
             <?php endforeach; ?>
 
         </div>
