@@ -243,7 +243,7 @@ span.omeka-addons-by {
 div.omeka-addons-top-plugins {
 	width: 42%;
 	float: right;
-	box-shadow: -3px 0 6px rgba(0, 0, 0, .2);
+	box-shadow: -4px 3px 8px -3px rgba(0, 0, 0, 0.2);
 	padding-left: 9px;
 	margin-bottom: -500px;
 	padding-bottom: 510px;
@@ -266,8 +266,7 @@ div#omeka-addons-top p.omeka-addons-description {
 	background-color: #EFEDD1;
 	padding: 6px;
 	border-top: 1px dotted black;
-	border-bottom: 1px dotted black;	
-	margin-top: 18px;
+	border-bottom: 1px dotted black;
 }
 
 div.omeka-addons-top-themes p.omeka-addons-description {
@@ -291,8 +290,8 @@ div.omeka-addons-col-head > h2 {
 
 div.omeka-addons-col-head > p {
 	display: inline;
-	border-top: 1px dotted black;
-	border-bottom: 1px dotted black;
+	border-top: 1px solid #EFEDD1;
+	border-bottom: 1px solid #EFEDD1;
 	text-transform: uppercase;
 	padding: 4px 4px;	
 	font-family: Georgia,Times,serif;
@@ -306,6 +305,12 @@ div.omeka-addons-col-head  a {
 div.omeka-addons-top-themes img.omeka-addons-screenshot {
 	float: right;
 	
+}
+
+div.addons-wrapper  p {
+	font-family: Georgia,Times,serif;
+	font-size: 1.5em;
+	margin-bottom: 1em;
 }
 
 .clear {
