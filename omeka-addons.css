@@ -190,6 +190,7 @@ table.omeka-addons-versions tr.even {
 
 div.omeka-addons-theme-archive div.omeka-addon {
 	height: 250px;	
+	border-bottom: 1px solid #EFEDD1;
 }
 
 div.omeka-addons-plugin-archive div.omeka-addon {
@@ -205,12 +206,23 @@ div.omeka-addons-plugin-archive p.omeka-addons-license {
 
 }
 
+div.omeka-addons-taxonomy div.omeka-addons-cats {
+	margin-bottom: 6px;	
+}
+
+div.omeka-addons-plugin-archive div.omeka-addons-cats {
+	margin-bottom: 6px;	
+}
+
+
 div.omeka-addons-plugin-archive div.omeka-addon {
-	margin-bottom: 18px;	
+	margin-bottom: 18px;
+	border-bottom: 1px solid #EFEDD1;
 }
 
 div.omeka-addons-taxonomy div.omeka-addon {
 	margin-bottom: 18px;	
+	border-bottom: 1px solid #EFEDD1;
 }
 
 div.omeka-addons-plugin-archive div.omeka-addons-download-block {
@@ -241,10 +253,10 @@ span.omeka-addons-by {
 
 	
 div.omeka-addons-top-plugins {
-	width: 42%;
+	width: 40%;
 	float: right;
-	box-shadow: -4px 3px 8px -3px rgba(0, 0, 0, 0.2);
-	padding-left: 9px;
+	box-shadow: -4px 3px 8px -3px rgba(0, 0, 0, 0.1);
+	padding-left: 20px;
 	margin-bottom: -500px;
 	padding-bottom: 510px;
 }
@@ -265,8 +277,8 @@ div#omeka-addons-top div.omeka-addons-cats {
 div#omeka-addons-top p.omeka-addons-description {
 	background-color: #EFEDD1;
 	padding: 6px;
-	border-top: 1px dotted black;
-	border-bottom: 1px dotted black;
+	border-top: 1px dotted #999;
+	border-bottom: 1px dotted #999;
 }
 
 div.omeka-addons-top-themes p.omeka-addons-description {
@@ -293,8 +305,11 @@ div.omeka-addons-col-head > p {
 	border-top: 1px solid #EFEDD1;
 	border-bottom: 1px solid #EFEDD1;
 	text-transform: uppercase;
-	padding: 4px 4px;	
+	padding: 8px 4px;
 	font-family: Georgia,Times,serif;
+	line-height: 28px;
+	margin-left: 10px;
+	color: #EFEDD1;
 }
 
 div.omeka-addons-col-head  a {
@@ -311,6 +326,12 @@ div.addons-wrapper  p {
 	font-family: Georgia,Times,serif;
 	font-size: 1.5em;
 	margin-bottom: 1em;
+}
+
+div#omeka-addons-top ul {
+	list-style: square;
+	margin-left: 1.75em;
+	color: #7F7567;
 }
 
 .clear {

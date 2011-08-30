@@ -609,25 +609,7 @@ class Omeka_Addons {
         }
         return $html;
     }
-    
-    function _normalize_file_name($filename, $version)
-    {
-        //want in the form of name-#.# , e.g. MyAddon-1.2 with 1.2 matching the version
-        $name_parts = pathinfo($filename);
-        $exploded_name = explode('-', $name_parts['filename']);
 
-        if(isset($exploded_name[1]) && (version_compare($exploded_name[1], $version) === 0) ) {
-            return $filename;
-        }
-        
-        if(!isset($exploded_name[1])) {
-            return $exploded_name[0] . '-' . $version . '.' . $name_parts['extension'];
-        }
-        //makes an error downstream
-        return 'version-fail';
-        
-    }
-    
     function _validate_ini_data($iniData)
     {
         
@@ -763,7 +745,7 @@ class Omeka_Addons {
         
         $iniData = $this->get_ini_data($data['tmp_name'], true);
         if($iniData && !isset($iniData['error'])) {
-            $name = $this->_normalize_file_name($name, $iniData['version']);
+            $name = sanitize_file_name($iniData['name'])  . '-' . $iniData['version'] . '.zip';
         } else {
              $name = 'ini-parse-fail';
         }
