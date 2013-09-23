@@ -318,14 +318,12 @@ class Omeka_Addons {
     function save_post()
     {
         global $post;
-    
         if(!empty($_POST['omeka_addons_delete'])) {
             $this->delete_releases($_POST['omeka_addons_delete']);
         }
         if(isset($_FILES['omeka_addons_file']) && $_FILES['omeka_addons_file']['size'] !=0 ) {
             
             $attachment_data = $_FILES['omeka_addons_file'];
-
             if($this->_create_attachment($attachment_data) ) {
 
                 $args = array(
@@ -355,7 +353,6 @@ class Omeka_Addons {
         $path = get_attached_file($zip_id);
         $url = $uploads['baseurl'] . "/" . $attachment->post_title;
         $iniData = $this->get_ini_data($path);
-    
         if($iniData) {
             $releaseData = $this->_validate_ini_data($iniData);
             $releaseData['ini_data'] = $iniData;
@@ -395,7 +392,7 @@ class Omeka_Addons {
         } else {
             $releaseData = array(
                            		'status' => 'error',
-                                'messages' => array('Problem reading the zip file contents. Please check that it follows the correct structure'),
+                                'messages' => array('Problem reading the zip file contents. Please check that it follows the correct structure.'),
                                 'ini_data' => array('version' => 'error'), //to make deleting work
                                 'attachment_id' => $attachment->ID
                             );
@@ -422,13 +419,10 @@ class Omeka_Addons {
         $tempName = 'omeka-addon-'. md5(uniqid(rand(), true));
         $tempDir = $tempPath . '/'.$tempName;
 
-        $shellCommand = 'cp '.$path.' '.$tempDir.'.zip'
-                      . ' && unzip -d '.$tempDir .' '.$tempDir.'.zip'
-                      . ' && rm '.$tempDir.'.zip';
+        $shellCommand = 'unzip -d ' . $tempDir . ' ' . $path;
 
         $return_var = null;
         exec($shellCommand, $output, $return_var);
-
         $tempDirContents = scandir($tempDir, 1);
         $addonFolder = $tempDirContents[0];
         $addonFolderPath = $tempDir. '/'. $addonFolder;
@@ -458,7 +452,6 @@ class Omeka_Addons {
                     exec($rmAddonDir, $output, $return_var);
                     return $ini_array;
                 }
-                
                 if( !empty($post) && ($post->post_type == 'omeka_theme') ) {
                     $is_new = true;
                     //check if image is already there
@@ -739,7 +732,6 @@ class Omeka_Addons {
     {
         global $post;
         $name = sanitize_file_name($data['name']);
-
         $uploads = wp_upload_dir();
         $uploads_dir = $uploads['basedir'];
         
@@ -752,7 +744,6 @@ class Omeka_Addons {
         
         $filename = "$uploads_dir/$name";
         if(file_exists($filename)) {
-
             //check the .ini data to see if it is a new version
             //if so, add the version as a suffix
                        
@@ -764,10 +755,9 @@ class Omeka_Addons {
             }
             $filename = "$uploads_dir/$name." . $fileParts['extension'];
         }
-
         move_uploaded_file($data['tmp_name'], $filename);
         $attachment = array(
-             'post_mime_type' => $data['type'],
+             'post_mime_type' => 'application/zip',
              'post_title' =>  $name,
              'post_content' => '',
              'post_status' => 'inherit'

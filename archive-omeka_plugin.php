@@ -2,7 +2,7 @@
 
 	<div id="primary" class="omeka-addons-plugin-archive">
 <h1>Plugins</h1>
-<p>The following plugins may be downloaded separately and installed to work with <strong>Omeka 1.0 or higher</strong>. Helpful instructions for installing plugins are on the <a href="http://omeka.org/codex/Managing_Plugins">codex</a>. If you are looking for plugins compatible with earlier versions of Omeka, see the list of <a href="/add-ons/010-plugins/">plugins compatible with Omeka 0.10</a> and <a href="/add-ons/09-plugins/">plugins compatible with Omeka 0.9</a>.</p>
+<p>The following plugins may be downloaded separately and installed to work with <strong>Omeka 1.x</strong>. Some have versions that are compatible with the more recent Omeka 2.x series. All plugins compatible with Omeka 2.x can be found <a href='http://omeka.org/blog/plugin_categories/2-0-compatible/'>here</a>. Helpful instructions for installing plugins are on the <a href="http://omeka.org/codex/Managing_Plugins">codex</a>.</p>
 		<?php query_posts($query_string . '&orderby=title&order=ASC&posts_per_page=-1'); ?>
         <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
         <?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>

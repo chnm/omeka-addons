@@ -40,7 +40,8 @@
 			</div>
 
 		<?php endwhile; endif; ?>
-	</div>
+    </div>
+    <div class="navigation"><p><?php posts_nav_link(); ?></p></div>
 
 <?php get_sidebar(); ?>
 <?php get_footer(); ?>

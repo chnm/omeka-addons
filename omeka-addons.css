@@ -25,12 +25,17 @@ div#omeka-addons-messages p.omeka-addons-upload-error {
 }
 
 .omeka-addons-release dd , .omeka-addons-release dt {
-	display: inline;	
+	display: inline-block;	
 }
 
 .omeka-addons-release dt {
 	font-weight: bold;
 	margin-right: .5em;
+    width: 30%;
+}
+
+.omeka-addons-release dd {
+    width: 66%;
 }
 
 .omeka-addons-content {
@@ -159,7 +164,7 @@ p.omeka-addons-latest-release {
 }
 
 .omeka-addons-h {
-	font-size: 12pt;	
+	font-size: 1.2em;	
 }
 
 
@@ -199,18 +204,20 @@ div.omeka-addons-plugin-archive div.omeka-addon {
 
 
 div.omeka-addons-plugin-archive p.omeka-addons-latest-release {
-	
+	text-align: right;
 }
 
 div.omeka-addons-plugin-archive p.omeka-addons-license {
-
+	width: 140px;
 }
 
 div.omeka-addons-taxonomy div.omeka-addons-cats {
+	clear: both;
 	margin-bottom: 6px;	
 }
 
 div.omeka-addons-plugin-archive div.omeka-addons-cats {
+	clear: both;
 	margin-bottom: 6px;	
 }
 
@@ -237,11 +244,11 @@ div.omeka-addons-taxonomy div.omeka-addons-download-block {
 	
 
 div.omeka-addons-taxonomy p.omeka-addons-latest-release {
-	
+	text-align: right;
 }
 
 div.omeka-addons-taxonomy p.omeka-addons-license {
-
+	width: 140px;
 }
 
 span.omeka-addons-by {

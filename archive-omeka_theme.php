@@ -11,11 +11,11 @@
         		<?php $releaseData = omeka_addons_get_latest_release_data($post->ID); ?>
 		        <p class='omeka-addons-description'><?php echo $releaseData['ini_data']['description']; ?></p>
                 <?php $license = isset($releaseData['ini_data']['license']) ? $releaseData['ini_data']['license'] : 'unknown'; ?>
-                
+                <p class='omeka-addons-license'><span>License</span>: <?php echo $license; ?></p>
                 <p class='omeka-addons-latest-release'>
                 	<a class='omeka-addons-button' href='<?php echo $releaseData["zip_url"]; ?>'>Download Latest: Ver. <?php echo $releaseData['ini_data']['version']; ?></a>
                 </p>
-				<p class='omeka-addons-license'><span>License</span>: <?php echo $license; ?></p>
+
 
 			</div>
 		<?php endwhile; endif; ?>

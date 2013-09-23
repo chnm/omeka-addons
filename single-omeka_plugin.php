@@ -8,8 +8,7 @@
 
 		
 		    <?php the_content(); ?>
-		</div>
-		<div class="omeka-addons-cats">
+		<div class="omeka-addons-cats" style="clear:left;";>
 	
 		<?php
 		    $terms = wp_get_post_terms( get_the_ID(), 'omeka_plugin_types');
@@ -25,6 +24,9 @@
 		    $html .= "</ul>";
 		    echo $html;
 		?>
+	
+		</div>
+		</div>
 		</div>
 	<?php endwhile; else: ?>
 		<p>Sorry, no posts matched your criteria.</p>
