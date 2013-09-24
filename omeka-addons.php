@@ -324,20 +324,10 @@ class Omeka_Addons {
         if(isset($_FILES['omeka_addons_file']) && $_FILES['omeka_addons_file']['size'] !=0 ) {
             
             $attachment_data = $_FILES['omeka_addons_file'];
-            if($this->_create_attachment($attachment_data) ) {
-
-                $args = array(
-                  'post_parent' => $post->ID,
-                  'post_type' => 'attachment',
-                  'post_mime_type' => 'application/zip',
-                  'order' => 'DESC',
-                  'orderby' => 'post_date',
-                  'numberposts' => 1
-                );
-                $attachments = get_children($args);
-                if ($attachments) {
-                    $last_attachment = array_pop($attachments);
-                    $this->add_attachment_release($last_attachment);
+            if(($attach_id = $this->_create_attachment($attachment_data))) {
+                $attachment = get_post($attach_id);
+                if ($attachment) {
+                    $this->add_attachment_release($attachment);
                 }
             }
         }
@@ -423,6 +413,7 @@ class Omeka_Addons {
 
         $return_var = null;
         exec($shellCommand, $output, $return_var);
+        
         $tempDirContents = scandir($tempDir, 1);
         $addonFolder = $tempDirContents[0];
         $addonFolderPath = $tempDir. '/'. $addonFolder;
@@ -770,7 +761,7 @@ class Omeka_Addons {
         $attach_data = array('guid' => $uploads['baseurl'] . "/$name");
         
         wp_update_attachment_metadata( $attach_id, $attach_data );
-        return true;
+        return $attach_id;
     }
     
     function addon_post_content($content)
